@@ -56,7 +56,7 @@ function NotificationsBell() {
         className="relative rounded-xl border border-slate-200 p-2.5 text-slate-500 transition-all hover:border-pcc-300 hover:text-pcc-700"
         aria-label="Notifications"
       >
-        <Bell className="h-4.5 w-4.5 h-5 w-5" />
+        <Bell className="h-5 w-5" />
         {failed.length > 0 && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />}
       </button>
       {open && (

@@ -20,7 +20,7 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = 'Co
         <button
           onClick={onConfirm}
           disabled={loading}
-          className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 disabled:opacity-60 ${
+          className={`rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60 ${
             danger ? 'bg-red-600 shadow-red-500/25 hover:bg-red-700' : 'bg-pcc-700 shadow-pcc-500/25 hover:bg-pcc-800'
           }`}
         >

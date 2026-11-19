@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/Modal'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import RowActionsMenu from '../../components/RowActionsMenu'
 import { Plus, Eye, Pencil, ShieldCheck, KeyRound, Ban, CheckCircle } from 'lucide-react'
 
 const EMPTY_FORM = { employeeCode: '', username: '', firstName: '', lastName: '', email: '', phone: '', password: '', roleCodes: [] }
@@ -117,7 +118,7 @@ function CreateEmployeeModal({ open, onClose, onCreated }) {
           <button
             type="submit"
             disabled={state.loading}
-            className="w-full rounded-xl bg-gradient-to-r from-pcc-700 to-pcc-500 py-3 text-sm font-semibold text-white shadow-lg shadow-pcc-500/25 transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60"
+            className="w-full rounded-xl bg-pcc-700 hover:bg-pcc-800 py-3 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
           >
             {state.loading ? 'Creating…' : 'Create Employee'}
           </button>
@@ -184,7 +185,7 @@ function EditRolesModal({ user: target, onClose, onSaved }) {
       <button
         onClick={save}
         disabled={state.loading}
-        className="mt-5 w-full rounded-xl bg-gradient-to-r from-pcc-700 to-pcc-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pcc-500/25 transition-all hover:-translate-y-0.5 disabled:opacity-60"
+        className="mt-5 w-full rounded-xl bg-pcc-700 hover:bg-pcc-800 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
       >
         {state.loading ? 'Saving…' : 'Save Roles'}
       </button>
@@ -247,7 +248,7 @@ function EditEmployeeModal({ user: target, onClose, onSaved }) {
           <button
             type="submit"
             disabled={state.loading}
-            className="w-full rounded-xl bg-gradient-to-r from-pcc-700 to-pcc-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pcc-500/25 transition-all hover:-translate-y-0.5 disabled:opacity-60"
+            className="w-full rounded-xl bg-pcc-700 hover:bg-pcc-800 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
           >
             {state.loading ? 'Saving…' : 'Save Changes'}
           </button>
@@ -408,7 +409,7 @@ export default function UsersPage() {
           {hasPermission('USER_CREATE') && (
             <button
               onClick={() => setCreateOpen(true)}
-              className="flex shrink-0 items-center gap-2 rounded-xl bg-pcc-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-pcc-700/20 transition-all hover:-translate-y-0.5 hover:bg-pcc-800"
+              className="flex shrink-0 items-center gap-2 rounded-xl bg-pcc-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pcc-800"
             >
               <Plus className="h-4 w-4" strokeWidth={2.2} />
               <span className="hidden sm:inline">New Employee</span>
@@ -490,43 +491,18 @@ export default function UsersPage() {
                           <td className="hidden px-5 py-3.5 text-xs text-slate-500 lg:table-cell">
                             {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                           </td>
-                          <td className="px-5 py-3.5">
-                            <div className="flex justify-end gap-0.5">
-                              <button onClick={() => setViewUser(u)} title="View details"
-                                className="rounded-lg p-2 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600">
-                                <Eye className="h-4.5 w-4.5 h-5 w-5" strokeWidth={1.8} />
-                              </button>
-                              {hasPermission('USER_UPDATE') && (
-                                <button onClick={() => setEditUser(u)} title="Edit employee"
-                                  className="rounded-lg p-2 text-slate-400 transition-all hover:bg-sky-50 hover:text-sky-600">
-                                  <Pencil className="h-4.5 w-4.5 h-5 w-5" strokeWidth={1.8} />
-                                </button>
-                              )}
-                              {hasPermission('USER_ASSIGN_ROLE') && (
-                                <button onClick={() => setEditRoles(u)} title="Edit roles"
-                                  className="rounded-lg p-2 text-slate-400 transition-all hover:bg-pcc-50 hover:text-pcc-600">
-                                  <ShieldCheck className="h-4.5 w-4.5 h-5 w-5" strokeWidth={1.8} />
-                                </button>
-                              )}
-                              {hasPermission('USER_UPDATE') && (
-                                <button onClick={() => doResetPassword(u)} title="Reset password"
-                                  className="rounded-lg p-2 text-slate-400 transition-all hover:bg-amber-50 hover:text-amber-600">
-                                  <KeyRound className="h-4.5 w-4.5 h-5 w-5" strokeWidth={1.8} />
-                                </button>
-                              )}
-                              {hasPermission('USER_DEACTIVATE') && (
-                                <button onClick={() => setConfirmStatus(u)} title={u.accountStatus === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                                  className={`rounded-lg p-2 transition-all ${
-                                    u.accountStatus === 'ACTIVE'
-                                      ? 'text-slate-400 hover:bg-red-50 hover:text-red-500'
-                                      : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-600'
-                                  }`}>
-                                  {u.accountStatus === 'ACTIVE'
-                                    ? <Ban className="h-4.5 w-4.5 h-5 w-5" strokeWidth={1.8} />
-                                    : <CheckCircle className="h-4.5 w-4.5 h-5 w-5" strokeWidth={1.8} />}
-                                </button>
-                              )}
-                            </div>
+                          <td className="px-5 py-3.5 text-right">
+                            <RowActionsMenu
+                              items={[
+                                { label: 'View details', icon: Eye, onClick: () => setViewUser(u) },
+                                hasPermission('USER_UPDATE') && { label: 'Edit employee', icon: Pencil, onClick: () => setEditUser(u) },
+                                hasPermission('USER_ASSIGN_ROLE') && { label: 'Manage roles', icon: ShieldCheck, onClick: () => setEditRoles(u) },
+                                hasPermission('USER_UPDATE') && { label: 'Reset password', icon: KeyRound, onClick: () => doResetPassword(u) },
+                                hasPermission('USER_DEACTIVATE') && (u.accountStatus === 'ACTIVE'
+                                  ? { label: 'Deactivate', icon: Ban, danger: true, onClick: () => setConfirmStatus(u) }
+                                  : { label: 'Activate', icon: CheckCircle, onClick: () => setConfirmStatus(u) }),
+                              ]}
+                            />
                           </td>
                         </tr>
                       ))}

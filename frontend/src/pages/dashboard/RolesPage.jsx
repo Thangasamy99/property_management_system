@@ -3,14 +3,6 @@ import { apiFetch } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import Modal from '../../components/Modal'
 
-const ROLE_COLORS = {
-  ADMIN: 'from-pcc-700 to-pcc-500',
-  MANAGER: 'from-indigo-600 to-indigo-400',
-  ACCOUNTANT: 'from-emerald-600 to-emerald-400',
-  PROPERTY_OFFICER: 'from-amber-600 to-amber-400',
-  LAND_OFFICER: 'from-teal-600 to-teal-400',
-}
-
 // Map backend permission modules to the panel's display groups
 const MODULE_GROUPS = [
   ['Identity', ['AUTH', 'USER', 'ROLE']],
@@ -100,7 +92,7 @@ function RoleFormModal({ role, onClose, onSaved }) {
         <button
           type="submit"
           disabled={state.loading}
-          className="w-full rounded-xl bg-gradient-to-r from-pcc-700 to-pcc-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pcc-500/25 transition-all hover:-translate-y-0.5 disabled:opacity-60"
+          className="w-full rounded-xl bg-pcc-700 hover:bg-pcc-800 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
         >
           {state.loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Role'}
         </button>
@@ -204,7 +196,7 @@ function PermissionEditorModal({ role, onClose, onSaved }) {
         <button
           onClick={save}
           disabled={state.loading || !modules}
-          className="rounded-xl bg-gradient-to-r from-pcc-700 to-pcc-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pcc-500/25 transition-all hover:-translate-y-0.5 disabled:opacity-60"
+          className="rounded-xl bg-pcc-700 hover:bg-pcc-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
         >
           {state.loading ? 'Saving…' : 'Save Permissions'}
         </button>
@@ -271,10 +263,10 @@ function RoleCard({ role, index, userCount, canEdit, canAssignPerm, onEdit, onPe
 
   return (
     <div
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-slide-up"
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md animate-fade-in"
       style={{ animationDelay: `${index * 90}ms` }}
     >
-      <div className={`bg-gradient-to-r px-6 py-4 text-white ${ROLE_COLORS[role.code] ?? 'from-slate-600 to-slate-400'}`}>
+      <div className={`px-6 py-4 text-white bg-pcc-900`}>
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-bold">{role.name}</h3>
@@ -370,7 +362,7 @@ export default function RolesPage() {
         {canCreate && (
           <button
             onClick={() => setCreateOpen(true)}
-            className="flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-pcc-700 to-pcc-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pcc-500/25 transition-all hover:-translate-y-0.5 hover:shadow-xl"
+            className="flex shrink-0 items-center gap-2 rounded-xl bg-pcc-700 hover:bg-pcc-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

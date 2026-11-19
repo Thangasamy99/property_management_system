@@ -85,7 +85,7 @@ export default function ProfilePage() {
           )}
           <button
             onClick={() => setPwdOpen(true)}
-            className="mt-4 w-full rounded-xl bg-gradient-to-r from-pcc-700 to-pcc-500 py-2.5 text-sm font-semibold text-white shadow-lg shadow-pcc-500/25 transition-all hover:-translate-y-0.5 hover:shadow-xl"
+            className="mt-4 w-full rounded-xl bg-pcc-700 hover:bg-pcc-800 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
           >
             Change Password
           </button>
