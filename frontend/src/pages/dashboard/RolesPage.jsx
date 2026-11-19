@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import { useSearchParams } from 'react-router-dom'
 import Modal from '../../components/Modal'
 
 // Map backend permission modules to the panel's display groups
@@ -330,6 +331,15 @@ export default function RolesPage() {
   const canCreate = hasPermission('ROLE_CREATE')
   const canEdit = hasPermission('ROLE_UPDATE')
   const canAssignPerm = hasPermission('ROLE_ASSIGN_PERMISSION')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // deep-link: /roles?new=1 opens the create dialog (sidebar "+" action)
+  useEffect(() => {
+    if (searchParams.get('new') === '1' && canCreate) {
+      setCreateOpen(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, canCreate, setSearchParams])
 
   const load = () =>
     apiFetch('/roles')

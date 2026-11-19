@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { apiFetch } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
+import { useSearchParams } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import RowActionsMenu from '../../components/RowActionsMenu'
@@ -313,6 +314,15 @@ export default function UsersPage() {
   const [confirmStatus, setConfirmStatus] = useState(null)
   const [confirmBusy, setConfirmBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // deep-link: /users?new=1 opens the create dialog (sidebar "+" action)
+  useEffect(() => {
+    if (searchParams.get('new') === '1' && hasPermission('USER_CREATE')) {
+      setCreateOpen(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, hasPermission, setSearchParams])
 
   useEffect(() => {
     if (hasPermission('ROLE_VIEW')) {

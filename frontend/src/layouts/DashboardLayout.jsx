@@ -2,35 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, ShieldCheck, History, ScrollText, UserCircle,
-  LogOut, Menu, ChevronDown, ChevronRight, Bell, KeyRound, ShieldAlert,
+  LogOut, Menu, ChevronDown, ChevronRight, ChevronsLeft, Plus, Bell, KeyRound, ShieldAlert,
 } from 'lucide-react'
 import { landingPathFor, useAuth } from '../context/AuthContext'
 import { apiFetch } from '../services/api'
 import ChangePasswordModal from '../components/ChangePasswordModal'
 import logo from '../assets/pcc-logo.png'
 
-const NAV_SECTIONS = [
-  {
-    title: 'Overview',
-    items: [
-      { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: 'Administration',
-    items: [
-      { to: '/users', label: 'Employees', permission: 'USER_VIEW', icon: Users },
-      { to: '/roles', label: 'Roles & Permissions', permission: 'ROLE_VIEW', icon: ShieldCheck },
-      { to: '/audit-logs', label: 'Audit Logs', permission: 'AUDIT_LOG_VIEW', icon: ScrollText },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { to: '/login-history', label: 'Login History', icon: History },
-      { to: '/profile', label: 'My Profile', icon: UserCircle },
-    ],
-  },
+const NAV_ITEMS = [
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/users', label: 'Employees', permission: 'USER_VIEW', icon: Users, add: '/users?new=1', badgeKey: 'employees' },
+  { to: '/roles', label: 'Roles & Permissions', permission: 'ROLE_VIEW', icon: ShieldCheck, add: '/roles?new=1' },
+  { to: '/login-history', label: 'Login History', icon: History },
+  { to: '/audit-logs', label: 'Audit Logs', permission: 'AUDIT_LOG_VIEW', icon: ScrollText },
+  { to: '/profile', label: 'My Profile', icon: UserCircle },
 ]
 
 const PAGE_TITLES = {
@@ -110,19 +95,31 @@ export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [pwdOpen, setPwdOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('pcc-nav-collapsed') === '1')
+  const [counts, setCounts] = useState({})
   const menuRef = useRef(null)
   const dashboardPath = landingPathFor(user)
 
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'Dashboard'
 
-  const sections = NAV_SECTIONS
-    .map((s) => ({
-      ...s,
-      items: s.items
-        .map((n) => ({ ...n, to: n.key === 'dashboard' ? dashboardPath : n.to }))
-        .filter((n) => !n.permission || hasPermission(n.permission)),
-    }))
-    .filter((s) => s.items.length > 0)
+  const items = NAV_ITEMS
+    .map((n) => ({ ...n, to: n.key === 'dashboard' ? dashboardPath : n.to }))
+    .filter((n) => !n.permission || hasPermission(n.permission))
+
+  // real badge counts (only what the user may see)
+  useEffect(() => {
+    if (!hasPermission('USER_VIEW')) return
+    apiFetch('/stats/dashboard')
+      .then(async (r) => r.ok && setCounts({ employees: (await r.json()).totalEmployees }))
+      .catch(() => {})
+  }, [hasPermission])
+
+  const toggleCollapsed = () => {
+    setCollapsed((c) => {
+      localStorage.setItem('pcc-nav-collapsed', c ? '0' : '1')
+      return !c
+    })
+  }
 
   useEffect(() => {
     const onClick = (e) => {
@@ -140,73 +137,129 @@ export default function DashboardLayout() {
   }
 
   const sidebar = (
-    <aside className="flex h-full w-[17rem] flex-col bg-pcc-900 text-white" aria-label="Main navigation">
-      {/* brand */}
-      <div className="flex items-center gap-3 px-6 py-5">
-        <img src={logo} alt="PCC Cameroon logo" className="h-10 w-10 rounded-lg bg-white object-contain p-1" />
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold leading-tight tracking-tight">PCC Cameroon</p>
-          <p className="truncate text-[11px] text-white/50">Property &amp; Land Management</p>
-        </div>
+    <aside className="flex h-full" aria-label="Main navigation">
+      {/* icon rail */}
+      <div className="flex w-[68px] flex-col items-center border-r border-white/10 bg-pcc-950 py-4">
+        <img src={logo} alt="PCC Cameroon" className="h-10 w-10 rounded-lg bg-white object-contain p-1" />
+        <nav className="mt-6 flex flex-1 flex-col items-center gap-2" aria-label="Icon navigation">
+          {items.map((item) => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.label}
+                to={item.to}
+                title={item.label}
+                aria-label={item.label}
+                className={({ isActive }) =>
+                  `relative flex h-11 w-11 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
+                    isActive ? 'bg-white/15 text-white ring-1 ring-white/20' : 'text-white/55 hover:bg-white/10 hover:text-white'
+                  }`
+                }
+              >
+                <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
+                {item.badgeKey && counts[item.badgeKey] != null && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pcc-400 px-1 text-[9px] font-bold text-pcc-950">
+                    {counts[item.badgeKey]}
+                  </span>
+                )}
+              </NavLink>
+            )
+          })}
+        </nav>
+        {collapsed && (
+          <button
+            onClick={toggleCollapsed}
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
+            className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl text-white/55 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300"
+          >
+            <ChevronRight className="h-5 w-5" strokeWidth={1.8} />
+          </button>
+        )}
+        <button
+          onClick={handleLogout}
+          title="Logout"
+          aria-label="Logout"
+          className="flex h-11 w-11 items-center justify-center rounded-xl text-white/55 transition-colors hover:bg-red-500/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300"
+        >
+          <LogOut className="h-5 w-5" strokeWidth={1.8} />
+        </button>
       </div>
 
-      {/* nav sections */}
-      <nav className="flex-1 overflow-y-auto px-4 pb-4">
-        {sections.map((section) => (
-          <div key={section.title} className="mt-5 first:mt-1">
-            <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
-              {section.title}
-            </p>
-            <ul className="space-y-1.5">
-              {section.items.map((item) => {
+      {/* label panel */}
+      {!collapsed && (
+        <div className="flex w-60 flex-col bg-pcc-900 text-white animate-[slide-right_0.2s_ease-out]">
+          {/* panel header */}
+          <div className="flex items-center justify-between gap-2 px-5 py-5">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold leading-tight tracking-tight">PCC Cameroon</p>
+              <p className="truncate text-[11px] text-white/50">Property &amp; Land Management</p>
+            </div>
+            <button
+              onClick={toggleCollapsed}
+              title="Collapse sidebar"
+              aria-label="Collapse sidebar"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <ChevronsLeft className="h-4 w-4" strokeWidth={1.8} />
+            </button>
+          </div>
+
+          {/* flat nav list */}
+          <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Full navigation">
+            <ul className="space-y-0.5">
+              {items.map((item) => {
                 const Icon = item.icon
                 return (
                   <li key={item.label}>
-                    <NavLink
-                      to={item.to}
-                      className={({ isActive }) =>
-                        `group flex min-h-[44px] items-center gap-3 rounded-lg px-3.5 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
-                          isActive
-                            ? 'bg-white/12 text-white ring-1 ring-white/15'
-                            : 'text-white/60 hover:bg-white/8 hover:text-white'
-                        }`
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <span className={`h-5 w-0.5 shrink-0 rounded-full ${isActive ? 'bg-pcc-400' : 'bg-transparent'}`} aria-hidden="true" />
-                          <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                          <span className="truncate">{item.label}</span>
-                        </>
+                    <div className="group relative flex items-center">
+                      <NavLink
+                        to={item.to}
+                        className={({ isActive }) =>
+                          `flex min-h-[44px] flex-1 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
+                            isActive ? 'bg-white/12 text-white' : 'text-white/60 hover:bg-white/8 hover:text-white'
+                          }`
+                        }
+                      >
+                        <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                        <span className="truncate">{item.label}</span>
+                        {item.badgeKey && counts[item.badgeKey] != null && (
+                          <span className="ml-auto rounded-md bg-white/12 px-1.5 py-0.5 text-[10px] font-bold text-white/80">
+                            {counts[item.badgeKey]}
+                          </span>
+                        )}
+                      </NavLink>
+                      {item.add && (
+                        <button
+                          onClick={() => navigate(item.add)}
+                          title={`New — ${item.label}`}
+                          aria-label={`Create new in ${item.label}`}
+                          className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-md text-white/45 opacity-0 transition-all hover:bg-white/15 hover:text-white focus-visible:opacity-100 group-hover:opacity-100"
+                        >
+                          <Plus className="h-4 w-4" strokeWidth={2} />
+                        </button>
                       )}
-                    </NavLink>
+                    </div>
                   </li>
                 )
               })}
             </ul>
-          </div>
-        ))}
-      </nav>
+          </nav>
 
-      {/* user + logout pinned bottom */}
-      <div className="border-t border-white/10 p-4">
-        <div className="mb-3 flex items-center gap-3 px-1.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pcc-500/30 text-sm font-bold ring-1 ring-white/20">
-            {user?.firstName?.[0]}{user?.lastName?.[0]}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-            <p className="truncate text-xs text-white/50">{user?.roles?.map((r) => r.name).join(', ')}</p>
+          {/* user footer */}
+          <div className="border-t border-white/10 p-4">
+            <div className="flex items-center gap-3 px-1.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pcc-500/30 text-sm font-bold ring-1 ring-white/20">
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                <p className="truncate text-xs text-white/50">{user?.roles?.map((r) => r.name).join(', ')}</p>
+              </div>
+            </div>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-white/10 px-4 text-sm font-medium text-white/80 transition-colors hover:bg-red-500/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300"
-        >
-          <LogOut className="h-4 w-4" strokeWidth={1.8} />
-          Logout
-        </button>
-      </div>
+      )}
     </aside>
   )
 
