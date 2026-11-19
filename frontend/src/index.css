@@ -1,0 +1,83 @@
+@import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+
+@theme {
+  /* PCC brand palette (design spec) */
+  --color-pcc-50: #faf5ff;
+  --color-pcc-100: #f3e8ff;
+  --color-pcc-200: #e9d5ff;
+  --color-pcc-300: #d8b4fe;
+  --color-pcc-400: #c084fc;
+  --color-pcc-500: #a855f7;   /* secondary purple */
+  --color-pcc-600: #8b2fc9;
+  --color-pcc-700: #7020a5;   /* primary */
+  --color-pcc-800: #5a1882;
+  --color-pcc-900: #48106e;   /* dark sidebar */
+  --color-pcc-950: #370b52;
+
+  /* Enterprise surface/text tokens */
+  --color-app-bg: #f4f6fa;
+  --color-ink: #172033;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --animate-fade-in: fade-in 0.7s ease-out both;
+  --animate-slide-up: slide-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-slide-left: slide-left 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-slide-right: slide-right 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-slow: float 9s ease-in-out infinite;
+  --animate-blob: blob 14s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 3.5s ease-in-out infinite;
+  --animate-scale-in: scale-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-left {
+    from { opacity: 0; transform: translateX(48px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slide-right {
+    from { opacity: 0; transform: translateX(-48px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-16px) rotate(-3deg); }
+  }
+  @keyframes blob {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(40px, -50px) scale(1.15); }
+    66% { transform: translate(-30px, 30px) scale(0.9); }
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.45); }
+    50% { box-shadow: 0 0 0 14px rgba(168, 85, 247, 0); }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes shimmer {
+    from { background-position: -200px 0; }
+    to { background-position: 200px 0; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

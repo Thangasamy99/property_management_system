@@ -1,0 +1,226 @@
+{
+  "info": {
+    "name": "PCC Identity Service",
+    "description": "Authentication & User Management API for PCC Cameroon Property & Land Management System. Set {{baseUrl}}, then run Auth > Login to capture {{accessToken}} and {{refreshToken}} via test scripts.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8081" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "adminPassword", "value": "paste-bootstrapped-admin-password" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const d = pm.response.json();",
+              "if (d.accessToken) { pm.collectionVariables.set('accessToken', d.accessToken); }",
+              "if (d.refreshToken) { pm.collectionVariables.set('refreshToken', d.refreshToken); }"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"{{adminPassword}}\"\n}" }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "const d = pm.response.json();",
+              "if (d.accessToken) { pm.collectionVariables.set('accessToken', d.accessToken); }",
+              "if (d.refreshToken) { pm.collectionVariables.set('refreshToken', d.refreshToken); }"
+            ], "type": "text/javascript" }
+          }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","refresh"] },
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","logout"] },
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
+        },
+        {
+          "name": "Current User (me)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/me", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","me"] }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","change-password"] },
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"{{adminPassword}}\",\n  \"newPassword\": \"NewStrongPass!2026\"\n}" }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","forgot-password"] },
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"admin\"\n}" }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","reset-password"] },
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"paste-reset-token\",\n  \"newPassword\": \"NewStrongPass!2026\"\n}" }
+          }
+        },
+        {
+          "name": "My Login History",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login-history?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login-history"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/users", "host": ["{{baseUrl}}"], "path": ["api","v1","users"] },
+            "body": { "mode": "raw", "raw": "{\n  \"employeeCode\": \"PCC-1001\",\n  \"username\": \"jdoe\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"jdoe@pcc-cameroon.cm\",\n  \"phone\": \"+237600000001\",\n  \"password\": \"TempPass!123\",\n  \"roleCodes\": [\"PROPERTY_OFFICER\"]\n}" }
+          }
+        },
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/users?page=0&size=20&sort=id&search=", "host": ["{{baseUrl}}"], "path": ["api","v1","users"], "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }, { "key": "sort", "value": "id" }, { "key": "search", "value": "" }] }
+          }
+        },
+        {
+          "name": "Get Employee",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/users/1", "host": ["{{baseUrl}}"], "path": ["api","v1","users","1"] }
+          }
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/2", "host": ["{{baseUrl}}"], "path": ["api","v1","users","2"] },
+            "body": { "mode": "raw", "raw": "{\n  \"employeeCode\": \"PCC-1001\",\n  \"username\": \"jdoe\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"jdoe@pcc-cameroon.cm\",\n  \"phone\": \"+237600000002\"\n}" }
+          }
+        },
+        {
+          "name": "Activate / Deactivate Employee",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/2/status", "host": ["{{baseUrl}}"], "path": ["api","v1","users","2","status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"INACTIVE\"\n}" }
+          }
+        },
+        {
+          "name": "Assign Roles",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/2/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","users","2","roles"] },
+            "body": { "mode": "raw", "raw": "{\n  \"roleCodes\": [\"PROPERTY_OFFICER\", \"LAND_OFFICER\"]\n}" }
+          }
+        },
+        {
+          "name": "Admin Reset Password",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/v1/users/2/reset-password", "host": ["{{baseUrl}}"], "path": ["api","v1","users","2","reset-password"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles & Permissions",
+      "item": [
+        {
+          "name": "List Roles",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","roles"] } }
+        },
+        {
+          "name": "Get Role",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/roles/1", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","1"] } }
+        },
+        {
+          "name": "Create Role",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/roles", "host": ["{{baseUrl}}"], "path": ["api","v1","roles"] },
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"AUDITOR\",\n  \"name\": \"Auditor\",\n  \"description\": \"Read-only audit access\"\n}" }
+          }
+        },
+        {
+          "name": "Update Role",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/roles/6", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","6"] },
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"AUDITOR\",\n  \"name\": \"Auditor\",\n  \"description\": \"Read-only audit & report access\"\n}" }
+          }
+        },
+        {
+          "name": "Role Permissions",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/roles/1/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","1","permissions"] } }
+        },
+        {
+          "name": "Set Role Permissions",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/roles/6/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","roles","6","permissions"] },
+            "body": { "mode": "raw", "raw": "{\n  \"permissionCodes\": [\"AUTH_LOGIN\",\"AUTH_LOGOUT\",\"AUTH_CHANGE_PASSWORD\",\"REPORT_VIEW\",\"AUDIT_LOG_VIEW\"]\n}" }
+          }
+        },
+        {
+          "name": "List Permissions",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/permissions", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions"] } }
+        },
+        {
+          "name": "Permissions by Module",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/permissions/modules", "host": ["{{baseUrl}}"], "path": ["api","v1","permissions","modules"] } }
+        }
+      ]
+    }
+  ]
+}
