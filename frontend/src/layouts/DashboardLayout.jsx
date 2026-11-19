@@ -140,7 +140,7 @@ export default function DashboardLayout() {
     <aside className="flex h-full" aria-label="Main navigation">
       {/* icon rail */}
       <div className="flex w-[68px] flex-col items-center border-r border-white/10 bg-pcc-950 py-4">
-        <img src={logo} alt="PCC Cameroon" className="h-10 w-10 rounded-lg bg-white object-contain p-1" />
+        <img src={logo} alt="PCC Cameroon" className="h-10 w-10 rounded-lg bg-white object-contain p-1 transition-transform duration-200 hover:scale-110" />
         <nav className="mt-6 flex flex-1 flex-col items-center gap-2" aria-label="Icon navigation">
           {items.map((item) => {
             const Icon = item.icon
@@ -151,16 +151,24 @@ export default function DashboardLayout() {
                 title={item.label}
                 aria-label={item.label}
                 className={({ isActive }) =>
-                  `relative flex h-11 w-11 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
+                  `relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
                     isActive ? 'bg-white/15 text-white ring-1 ring-white/20' : 'text-white/55 hover:bg-white/10 hover:text-white'
                   }`
                 }
               >
-                <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-                {item.badgeKey && counts[item.badgeKey] != null && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pcc-400 px-1 text-[9px] font-bold text-pcc-950">
-                    {counts[item.badgeKey]}
-                  </span>
+                {({ isActive }) => (
+                  <>
+                    <span
+                      className={`absolute -left-[13px] h-5 w-1 rounded-r-full bg-pcc-400 transition-all duration-200 ${isActive ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`}
+                      aria-hidden="true"
+                    />
+                    <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
+                    {item.badgeKey && counts[item.badgeKey] != null && (
+                      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pcc-400 px-1 text-[9px] font-bold text-pcc-950 animate-scale-in">
+                        {counts[item.badgeKey]}
+                      </span>
+                    )}
+                  </>
                 )}
               </NavLink>
             )
@@ -171,7 +179,7 @@ export default function DashboardLayout() {
             onClick={toggleCollapsed}
             title="Expand sidebar"
             aria-label="Expand sidebar"
-            className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl text-white/55 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300"
+            className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl text-white/55 transition-all duration-200 hover:scale-110 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 animate-scale-in"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.8} />
           </button>
@@ -180,15 +188,18 @@ export default function DashboardLayout() {
           onClick={handleLogout}
           title="Logout"
           aria-label="Logout"
-          className="flex h-11 w-11 items-center justify-center rounded-xl text-white/55 transition-colors hover:bg-red-500/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300"
+          className="flex h-11 w-11 items-center justify-center rounded-xl text-white/55 transition-all duration-200 hover:scale-110 hover:bg-red-500/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300"
         >
           <LogOut className="h-5 w-5" strokeWidth={1.8} />
         </button>
       </div>
 
-      {/* label panel */}
-      {!collapsed && (
-        <div className="flex w-60 flex-col bg-pcc-900 text-white animate-[slide-right_0.2s_ease-out]">
+      {/* label panel — kept mounted so width can animate */}
+      <div
+        className={`overflow-hidden bg-pcc-900 text-white transition-[width] duration-300 ease-out ${collapsed ? 'w-0' : 'w-60'}`}
+        aria-hidden={collapsed}
+      >
+        <div className={`flex h-full w-60 flex-col transition-opacity duration-200 ${collapsed ? 'opacity-0' : 'opacity-100'}`}>
           {/* panel header */}
           <div className="flex items-center justify-between gap-2 px-5 py-5">
             <div className="min-w-0">
@@ -216,7 +227,7 @@ export default function DashboardLayout() {
                       <NavLink
                         to={item.to}
                         className={({ isActive }) =>
-                          `flex min-h-[44px] flex-1 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
+                          `flex min-h-[44px] flex-1 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-all duration-200 hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
                             isActive ? 'bg-white/12 text-white' : 'text-white/60 hover:bg-white/8 hover:text-white'
                           }`
                         }
@@ -234,7 +245,7 @@ export default function DashboardLayout() {
                           onClick={() => navigate(item.add)}
                           title={`New — ${item.label}`}
                           aria-label={`Create new in ${item.label}`}
-                          className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-md text-white/45 opacity-0 transition-all hover:bg-white/15 hover:text-white focus-visible:opacity-100 group-hover:opacity-100"
+                          className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-md text-white/45 opacity-0 transition-all duration-200 hover:scale-110 hover:bg-white/15 hover:text-white focus-visible:opacity-100 group-hover:opacity-100"
                         >
                           <Plus className="h-4 w-4" strokeWidth={2} />
                         </button>
@@ -259,12 +270,12 @@ export default function DashboardLayout() {
             </div>
           </div>
         </div>
-      )}
+      </div>
     </aside>
   )
 
   return (
-    <div className="flex min-h-screen bg-app-bg text-ink">
+    <div className="flex h-screen overflow-hidden bg-app-bg text-ink">
       {/* skip link for keyboard users */}
       <a
         href="#main-content"
@@ -273,7 +284,7 @@ export default function DashboardLayout() {
         Skip to content
       </a>
 
-      <div className="hidden shrink-0 lg:block">{sidebar}</div>
+      <div className="hidden h-full shrink-0 lg:block">{sidebar}</div>
 
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
@@ -282,7 +293,7 @@ export default function DashboardLayout() {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         {/* header */}
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-md">
           <div className="flex min-h-[64px] items-center gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
