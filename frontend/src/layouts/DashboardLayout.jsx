@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, ShieldCheck, History, ScrollText, UserCircle,
-  LogOut, Menu, ChevronDown, ChevronRight, ChevronsLeft, Plus, Bell, KeyRound, ShieldAlert,
+  LogOut, Menu, ChevronDown, ChevronRight, ChevronsLeft, Plus, Bell, KeyRound,
+  ShieldAlert, Search, UserPlus, ShieldPlus,
 } from 'lucide-react'
 import { landingPathFor, useAuth } from '../context/AuthContext'
 import { apiFetch } from '../services/api'
@@ -94,10 +95,13 @@ export default function DashboardLayout() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
   const [pwdOpen, setPwdOpen] = useState(false)
+  const [search, setSearch] = useState('')
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('pcc-nav-collapsed') === '1')
   const [counts, setCounts] = useState({})
   const menuRef = useRef(null)
+  const addRef = useRef(null)
   const dashboardPath = landingPathFor(user)
 
   const pageTitle = PAGE_TITLES[location.pathname] ?? 'Dashboard'
@@ -124,10 +128,17 @@ export default function DashboardLayout() {
   useEffect(() => {
     const onClick = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
+      if (addRef.current && !addRef.current.contains(e.target)) setAddOpen(false)
     }
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
+
+  const submitSearch = (e) => {
+    e.preventDefault()
+    const q = search.trim()
+    if (q) navigate(`/users?search=${encodeURIComponent(q)}`)
+  }
 
   useEffect(() => setMobileOpen(false), [location.pathname])
 
@@ -139,8 +150,8 @@ export default function DashboardLayout() {
   const sidebar = (
     <aside className="flex h-full" aria-label="Main navigation">
       {/* icon rail */}
-      <div className="flex w-[68px] flex-col items-center border-r border-white/10 bg-pcc-950 py-4">
-        <img src={logo} alt="PCC Cameroon" className="h-10 w-10 rounded-lg bg-white object-contain p-1 transition-transform duration-200 hover:scale-110" />
+      <div className="flex w-[68px] flex-col items-center border-r border-slate-200 bg-white py-4">
+        <img src={logo} alt="PCC Cameroon" className="h-10 w-10 rounded-lg object-contain ring-1 ring-slate-200 transition-transform duration-200 hover:scale-110" />
         <nav className="mt-6 flex flex-1 flex-col items-center gap-2" aria-label="Icon navigation">
           {items.map((item) => {
             const Icon = item.icon
@@ -151,20 +162,20 @@ export default function DashboardLayout() {
                 title={item.label}
                 aria-label={item.label}
                 className={({ isActive }) =>
-                  `relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
-                    isActive ? 'bg-white/15 text-white ring-1 ring-white/20' : 'text-white/55 hover:bg-white/10 hover:text-white'
+                  `relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-500 ${
+                    isActive ? 'bg-pcc-100 text-pcc-700' : 'text-slate-400 hover:bg-pcc-50 hover:text-pcc-700'
                   }`
                 }
               >
                 {({ isActive }) => (
                   <>
                     <span
-                      className={`absolute -left-[13px] h-5 w-1 rounded-r-full bg-pcc-400 transition-all duration-200 ${isActive ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`}
+                      className={`absolute -left-[13px] h-5 w-1 rounded-r-full bg-pcc-600 transition-all duration-200 ${isActive ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`}
                       aria-hidden="true"
                     />
                     <Icon className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
                     {item.badgeKey && counts[item.badgeKey] != null && (
-                      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pcc-400 px-1 text-[9px] font-bold text-pcc-950 animate-scale-in">
+                      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pcc-600 px-1 text-[9px] font-bold text-white animate-scale-in">
                         {counts[item.badgeKey]}
                       </span>
                     )}
@@ -179,7 +190,7 @@ export default function DashboardLayout() {
             onClick={toggleCollapsed}
             title="Expand sidebar"
             aria-label="Expand sidebar"
-            className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl text-white/55 transition-all duration-200 hover:scale-110 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 animate-scale-in"
+            className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition-all duration-200 hover:scale-110 hover:bg-pcc-50 hover:text-pcc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-500 animate-scale-in"
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.8} />
           </button>
@@ -188,7 +199,7 @@ export default function DashboardLayout() {
           onClick={handleLogout}
           title="Logout"
           aria-label="Logout"
-          className="flex h-11 w-11 items-center justify-center rounded-xl text-white/55 transition-all duration-200 hover:scale-110 hover:bg-red-500/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300"
+          className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition-all duration-200 hover:scale-110 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
         >
           <LogOut className="h-5 w-5" strokeWidth={1.8} />
         </button>
@@ -196,25 +207,63 @@ export default function DashboardLayout() {
 
       {/* label panel — kept mounted so width can animate */}
       <div
-        className={`overflow-hidden bg-pcc-900 text-white transition-[width] duration-300 ease-out ${collapsed ? 'w-0' : 'w-60'}`}
+        className={`overflow-hidden border-r border-slate-200 bg-white transition-[width] duration-300 ease-out ${collapsed ? 'w-0 border-r-0' : 'w-60'}`}
         aria-hidden={collapsed}
       >
         <div className={`flex h-full w-60 flex-col transition-opacity duration-200 ${collapsed ? 'opacity-0' : 'opacity-100'}`}>
           {/* panel header */}
-          <div className="flex items-center justify-between gap-2 px-5 py-5">
+          <div className="flex items-center justify-between gap-2 px-5 pt-5 pb-4">
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-tight tracking-tight">PCC Cameroon</p>
-              <p className="truncate text-[11px] text-white/50">Property &amp; Land Management</p>
+              <p className="truncate text-sm font-bold leading-tight tracking-tight text-ink">PCC Cameroon</p>
+              <p className="truncate text-[11px] text-slate-400">Property &amp; Land Management</p>
             </div>
             <button
               onClick={toggleCollapsed}
               title="Collapse sidebar"
               aria-label="Collapse sidebar"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
             >
               <ChevronsLeft className="h-4 w-4" strokeWidth={1.8} />
             </button>
           </div>
+
+          {/* add new CTA */}
+          {(hasPermission('USER_CREATE') || hasPermission('ROLE_CREATE')) && (
+            <div className="relative px-4 pb-3" ref={addRef}>
+              <button
+                onClick={() => setAddOpen((v) => !v)}
+                aria-expanded={addOpen}
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-pcc-600 text-sm font-semibold text-white shadow-sm shadow-pcc-500/25 transition-all duration-200 hover:bg-pcc-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-400"
+              >
+                <Plus className="h-4 w-4" strokeWidth={2.2} />
+                Add New
+              </button>
+              {addOpen && (
+                <div className="absolute left-4 right-4 top-full z-20 overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-xl animate-scale-in" role="menu">
+                  {hasPermission('USER_CREATE') && (
+                    <button
+                      role="menuitem"
+                      onClick={() => { setAddOpen(false); navigate('/users?new=1') }}
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-pcc-50 hover:text-pcc-700"
+                    >
+                      <UserPlus className="h-4 w-4 text-pcc-600" strokeWidth={1.8} />
+                      New Employee
+                    </button>
+                  )}
+                  {hasPermission('ROLE_CREATE') && (
+                    <button
+                      role="menuitem"
+                      onClick={() => { setAddOpen(false); navigate('/roles?new=1') }}
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-pcc-50 hover:text-pcc-700"
+                    >
+                      <ShieldPlus className="h-4 w-4 text-pcc-600" strokeWidth={1.8} />
+                      New Role
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* flat nav list */}
           <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Full navigation">
@@ -227,15 +276,15 @@ export default function DashboardLayout() {
                       <NavLink
                         to={item.to}
                         className={({ isActive }) =>
-                          `flex min-h-[44px] flex-1 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-all duration-200 hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-300 ${
-                            isActive ? 'bg-white/12 text-white' : 'text-white/60 hover:bg-white/8 hover:text-white'
+                          `flex min-h-[44px] flex-1 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-all duration-200 hover:translate-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pcc-500 ${
+                            isActive ? 'bg-pcc-50 font-semibold text-pcc-700' : 'text-slate-500 hover:bg-pcc-50 hover:text-pcc-700'
                           }`
                         }
                       >
                         <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
                         <span className="truncate">{item.label}</span>
                         {item.badgeKey && counts[item.badgeKey] != null && (
-                          <span className="ml-auto rounded-md bg-white/12 px-1.5 py-0.5 text-[10px] font-bold text-white/80">
+                          <span className="ml-auto rounded-md bg-pcc-100 px-1.5 py-0.5 text-[10px] font-bold text-pcc-700">
                             {counts[item.badgeKey]}
                           </span>
                         )}
@@ -245,7 +294,7 @@ export default function DashboardLayout() {
                           onClick={() => navigate(item.add)}
                           title={`New — ${item.label}`}
                           aria-label={`Create new in ${item.label}`}
-                          className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-md text-white/45 opacity-0 transition-all duration-200 hover:scale-110 hover:bg-white/15 hover:text-white focus-visible:opacity-100 group-hover:opacity-100"
+                          className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-md text-slate-300 opacity-0 transition-all duration-200 hover:scale-110 hover:bg-pcc-100 hover:text-pcc-700 focus-visible:opacity-100 group-hover:opacity-100"
                         >
                           <Plus className="h-4 w-4" strokeWidth={2} />
                         </button>
@@ -258,14 +307,14 @@ export default function DashboardLayout() {
           </nav>
 
           {/* user footer */}
-          <div className="border-t border-white/10 p-4">
+          <div className="border-t border-slate-100 p-4">
             <div className="flex items-center gap-3 px-1.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pcc-500/30 text-sm font-bold ring-1 ring-white/20">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-pcc-600 text-sm font-bold text-white">
                 {user?.firstName?.[0]}{user?.lastName?.[0]}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-                <p className="truncate text-xs text-white/50">{user?.roles?.map((r) => r.name).join(', ')}</p>
+                <p className="truncate text-sm font-medium text-ink">{user?.firstName} {user?.lastName}</p>
+                <p className="truncate text-xs text-slate-400">{user?.roles?.map((r) => r.name).join(', ')}</p>
               </div>
             </div>
           </div>
@@ -316,6 +365,22 @@ export default function DashboardLayout() {
               </nav>
               <h1 className="truncate text-base font-bold tracking-tight text-ink sm:text-lg">{pageTitle}</h1>
             </div>
+
+            {hasPermission('USER_VIEW') && (
+              <form onSubmit={submitSearch} className="mx-auto hidden w-full max-w-md lg:block" role="search">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search employees…"
+                    aria-label="Search employees"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-ink placeholder:text-slate-400 transition-colors focus:border-pcc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-pcc-100"
+                  />
+                </div>
+              </form>
+            )}
 
             <div className="ml-auto flex items-center gap-2 sm:gap-3">
               <NotificationsBell />

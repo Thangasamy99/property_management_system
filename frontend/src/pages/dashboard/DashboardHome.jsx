@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../services/api'
 import ActivityChart from '../../components/ActivityChart'
+import { UserPlus, ShieldPlus, History, ScrollText } from 'lucide-react'
 
 const ROLE_TITLES = {
   ADMIN: 'Admin Dashboard',
@@ -115,6 +116,13 @@ export default function DashboardHome() {
     ]
   }, [stats, user])
 
+  const quickActions = [
+    hasPermission('USER_CREATE') && { to: '/users?new=1', label: 'New Employee', sub: 'Onboard a staff member', icon: UserPlus },
+    hasPermission('ROLE_CREATE') && { to: '/roles?new=1', label: 'New Role', sub: 'Define access levels', icon: ShieldPlus },
+    { to: '/login-history', label: 'Login History', sub: 'Review sign-in activity', icon: History },
+    canSeeAudit && { to: '/audit-logs', label: 'Audit Logs', sub: 'Inspect admin changes', icon: ScrollText },
+  ].filter(Boolean)
+
   const securityKpis = stats && [
     { label: 'Logins (all time)', value: stats.successfulLogins, icon: ICONS.login, tone: 'text-teal-600 bg-teal-50' },
     { label: 'Failed Logins', value: stats.failedLogins, icon: ICONS.warn, tone: 'text-red-600 bg-red-50' },
@@ -146,6 +154,27 @@ export default function DashboardHome() {
           </div>
         </div>
       </section>
+
+      {/* quick actions */}
+      {quickActions.length > 0 && (
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {quickActions.map((a) => (
+            <Link
+              key={a.label}
+              to={a.to}
+              className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-pcc-300 hover:shadow-md hover:shadow-pcc-500/10"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pcc-50 text-pcc-600 transition-colors duration-200 group-hover:bg-pcc-600 group-hover:text-white">
+                <a.icon className="h-5 w-5" strokeWidth={1.8} />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold text-ink">{a.label}</span>
+                <span className="block truncate text-[11px] text-slate-400">{a.sub}</span>
+              </span>
+            </Link>
+          ))}
+        </section>
+      )}
 
       {/* KPI cards */}
       <section className={`grid gap-4 ${kpis.length > 2 ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-2'}`}>

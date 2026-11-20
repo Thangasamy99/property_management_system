@@ -316,6 +316,12 @@ export default function UsersPage() {
   const [notice, setNotice] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
 
+  // header search deep-links here as /users?search=...
+  useEffect(() => {
+    const s = searchParams.get('search')
+    if (s != null && s !== search) setSearch(s)
+  }, [searchParams])
+
   // deep-link: /users?new=1 opens the create dialog (sidebar "+" action)
   useEffect(() => {
     if (searchParams.get('new') === '1' && hasPermission('USER_CREATE')) {
