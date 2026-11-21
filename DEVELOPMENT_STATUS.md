@@ -198,3 +198,29 @@ Dashboard (stat cards + pending list), All/Mine/Pending/Overdue/Returned/History
 - Phase 9+ Reporting service — not started.
 - `building_land_parcels` link table — deferred until Property↔Land integration requirements are defined.
 - GIS map visualization — coordinates stored and validated; map UI deferred.
+
+---
+
+## Phase 7 — Reporting & Analytics Service (`pcc-reporting-service` :8087)
+
+Independent aggregator: relays the caller JWT to owning services over HTTP; never touches another service's database. Own DB `pcc_reporting_db` (Flyway V1: `report_definitions`, `report_cache_entries`, `report_execution_logs`, `report_export_logs`, `scheduled_report_configs`).
+
+**Aggregation layer** (`SourceGateway`): configurable per-service base URLs, connect/read timeouts, bounded parallelism (4 workers), JWT relay captured on the request thread, auto-pagination capped at 1000 rows, every result carries service/status/fetchedAt/error/cached. Down or failed sources are reported as `DOWN`/`PARTIAL` — never silently zero-filled.
+
+**Dashboards** `/api/v1/dashboard/{executive,property,land,finance,workflow,documents}`: consolidated KPIs + per-source health block; period selector (today/week/month/quarter/year/custom) passed through to Finance endpoints. Executive = 10 parallel calls + paged property lists; portfolio totals are lifetime, periodCollections is period-scoped.
+
+**Reports**: `ReportRegistry` defines ~30 report types across PROPERTY/LAND/FINANCE/WORKFLOW/DOCUMENT/IDENTITY, each mapped to a real owning-service endpoint (reuses Finance's own report endpoints — no duplicate computation) with column projection + automatic numeric/money totals. `/reports/{domain}/{key}` runs them; `/reports/definitions` returns only what the caller's permissions allow; `/reports/{key}/export?format=CSV|XLSX|PDF` (Apache POI + OpenPDF, PCC header, filters, totals, row cap noted); `/reports/refresh` (REPORT_REFRESH) clears cache; `/reports/execution-history` pages the audit log.
+
+**Permissions** — Identity V8: new `REPORTING_VIEW, DASHBOARD_VIEW, PROPERTY_REPORT_VIEW, DOCUMENT_REPORT_VIEW, EMPLOYEE_REPORT_VIEW, AUDIT_REPORT_VIEW, REPORT_EXPORT, REPORT_REFRESH, REPORT_CONFIGURE`; reuses `LAND_REPORT_VIEW` (V4), `WORKFLOW_REPORT_VIEW` (V7), `FINANCIAL_REPORT_VIEW` (V2). Officers get their domain only; ACCOUNTANT finance/workflow/document; MANAGER all operational + export/refresh; ADMIN everything. Per-report permission enforced server-side in addition to menu filtering.
+
+**Caching**: DB-backed `report_cache_entries` w/ configurable TTL (`pcc.reporting.cache-ttl-seconds`, default 120s); freshness timestamps always surfaced; POST /reports/refresh invalidates.
+
+**Frontend** (`src/pages/reporting/`): `rpFetch`/`rpDownload` on :8087, 13 permission-gated screens via 3 reusable components (KPI cards, pure-SVG bar charts, period picker, source-health banner, generic report runner with filters+exports+paging, execution history) + 14 nav entries.
+
+**Tests**: 7/7 — definitions seeding + permission filtering, rows+totals, least-privilege 403/401, DOWN-source health, CSV/XLSX/PDF generation, refresh permission, execution logging. Vite build clean.
+
+**Live verification**: executive dashboard pulled real data from all 5 services (1 property/1 apt 100% occupied/1 active agreement; 2 parcels 8700sqm; collections 15,250,000 XAF; 1 pending/3 completed workflow; 3 docs). PROPERTY_OFFICER live: property dashboard 200, finance 403, refresh 403, definitions filtered. Exports verified as valid CSV/XLSX/PDF files. Downstream outage confirmed via visible DOWN source entries.
+
+**Limitations**: employee/audit reports depend on what Identity exposes (audit-logs endpoint only — login trends limited); page-size cap 1000 rows; cache applies to dashboards not individual report runs; PDF covers full row set w/ truncation notice.
+
+Run: `SERVER_PORT=8087 DB_URL=... DB_PASSWORD=... JWT_SECRET=... java -jar pcc-reporting-service.jar` (all six service URLs configurable via `pcc.reporting.*-url`).

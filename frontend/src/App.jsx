@@ -46,6 +46,9 @@ import WorkflowDetailPage from './pages/workflows/WorkflowDetailPage.jsx'
 import DefinitionsPage from './pages/workflows/DefinitionsPage.jsx'
 import DelegationsPage from './pages/workflows/DelegationsPage.jsx'
 import NotificationsPage from './pages/workflows/NotificationsPage.jsx'
+import RpDashboardsPage from './pages/reporting/DashboardsPage.jsx'
+import RpReportsPage from './pages/reporting/ReportsPage.jsx'
+import RpHistoryPage from './pages/reporting/HistoryPage.jsx'
 
 function RootRedirect() {
   const { user, ready } = useAuth()
@@ -178,6 +181,20 @@ export default function App() {
                 <Route path="/workflows/definitions" element={<DefinitionsPage />} />
                 <Route path="/workflows/delegations" element={<DelegationsPage />} />
                 <Route path="/workflows/notifications" element={<NotificationsPage />} />
+                <Route path="/reporting" element={<RpDashboardsPage kind="executive" />} />
+                <Route path="/reporting/property-analytics" element={<RpDashboardsPage kind="property" />} />
+                <Route path="/reporting/land-analytics" element={<RpDashboardsPage kind="land" />} />
+                <Route path="/reporting/finance-analytics" element={<RpDashboardsPage kind="finance" />} />
+                <Route path="/reporting/workflow-analytics" element={<RpDashboardsPage kind="workflow" />} />
+                <Route path="/reporting/document-analytics" element={<RpDashboardsPage kind="documents" />} />
+                <Route path="/reporting/property-reports" element={<RpReportsPage domain="PROPERTY" />} />
+                <Route path="/reporting/land-reports" element={<RpReportsPage domain="LAND" />} />
+                <Route path="/reporting/finance-reports" element={<RpReportsPage domain="FINANCE" />} />
+                <Route path="/reporting/workflow-reports" element={<RpReportsPage domain="WORKFLOW" />} />
+                <Route path="/reporting/document-reports" element={<RpReportsPage domain="DOCUMENT" />} />
+                <Route path="/reporting/employee-reports" element={<RpReportsPage domain="IDENTITY" />} />
+                <Route path="/reporting/audit-reports" element={<RpReportsPage domain="IDENTITY" />} />
+                <Route path="/reporting/history" element={<RpHistoryPage />} />
               </Route>
             </Route>
           </Route>

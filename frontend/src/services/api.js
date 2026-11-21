@@ -4,6 +4,7 @@ const LAND_API_BASE = import.meta.env.VITE_LAND_API_URL ?? 'http://localhost:808
 const FINANCE_API_BASE = import.meta.env.VITE_FINANCE_API_URL ?? 'http://localhost:8084/api/v1'
 const DOCUMENT_API_BASE = import.meta.env.VITE_DOCUMENT_API_URL ?? 'http://localhost:8085/api/v1'
 const WORKFLOW_API_BASE = import.meta.env.VITE_WORKFLOW_API_URL ?? 'http://localhost:8086/api/v1'
+const REPORTING_API_BASE = import.meta.env.VITE_REPORTING_API_URL ?? 'http://localhost:8087/api/v1'
 
 // Access token lives in memory only (never localStorage).
 // Session restore happens through the HttpOnly refresh cookie.
@@ -86,6 +87,29 @@ export async function wfFetch(path, options = {}, retry = true) {
   if (res.status === 401 && retry) {
     const restored = await refreshSession()
     if (restored) return wfFetch(path, options, false)
+  }
+  return res
+}
+
+/** Same auth contract against the Reporting Service (:8087). */
+export async function rpFetch(path, options = {}, retry = true) {
+  const res = await baseFetch(REPORTING_API_BASE, path, options)
+  if (res.status === 401 && retry) {
+    const restored = await refreshSession()
+    if (restored) return rpFetch(path, options, false)
+  }
+  return res
+}
+
+/** Binary download (exports) against the Reporting Service. */
+export async function rpDownload(path, retry = true) {
+  const res = await fetch(`${REPORTING_API_BASE}${path}`, {
+    credentials: 'include',
+    headers: tokenStore.get() ? { Authorization: `Bearer ${tokenStore.get()}` } : {},
+  })
+  if (res.status === 401 && retry) {
+    const restored = await refreshSession()
+    if (restored) return rpDownload(path, false)
   }
   return res
 }
