@@ -71,9 +71,57 @@ New `src/pages/property/` module (6 screens) + shared `components/DataTable.jsx`
 - `landFetch` (:8083, VITE_LAND_API_URL); permission-gated nav/routes; Add-New deep links for parcel + sale forms.
 - Verified live with `lo1` (LAND_OFFICER): LND-0002, SRV-0001, OWN-0001, ACQ-0001, SAL-0001; approve 403, conflict 422.
 
+## Phase 6: Finance Service — COMPLETE
+
+`pcc-finance-service` (:8084, `pcc_finance_db`) — independent microservice validating identity-issued JWTs (same contract). XAF currency. Finance owns payments, allocations, receipts, refunds, ledger and accounts; Property/Land remain source of truth for their own records — integration is HTTP-only.
+
+### Migrations
+- Finance `V1` — 11 tables: finance_accounts, payment_methods, payment_targets, payments, payment_allocations, receipts, other_income, expenses, refunds, ledger_entries, audit_logs.
+- Identity `V5` — seeds finance permissions: FINANCE_DASHBOARD_VIEW, RENT_COLLECTION_VIEW/CREATE/APPROVE, LAND_PAYMENT_VIEW/CREATE/APPROVE/SYNC, INCOME_VIEW/CREATE/APPROVE, EXPENSE_PAY, RECEIPT_VIEW/PRINT, REFUND_VIEW/CREATE/APPROVE, LEDGER_VIEW/ADJUST, CASH_ACCOUNT_VIEW/MANAGE + cross-module view grants (RENTAL_VIEW, TENANT_VIEW, LAND_VIEW, LAND_OWNERSHIP_VIEW, LAND_REPORT_VIEW for ACCOUNTANT; PROPERTY_VIEW for officers).
+- Property `V2` — `rent_schedules.paid_amount` column for Finance sync.
+- Land `V2` — `paid_amount` + `finance_status` columns on `land_acquisitions` and `land_sales`.
+
+### APIs (`/api/v1`) — 13 controllers
+- `/dashboard/summary` — real totals: collections/expenses today+month, outstanding rent, land paid/receipts, cash/bank balances, 6-month income-vs-expense series, recent transactions.
+- `/rent-collections` — `GET /payments` (search/status/date-range, paged), `GET /targets/{scheduleId}` (outstanding), `POST /payments` (full/partial, idempotent), `POST /payments/{id}/post` (approver).
+- `/land-acquisition-payments`, `/land-sale-receipts` — same payment pattern against Land records.
+- `/other-income` — create (RECORDED) → approve&post / reject.
+- `/expenses` — create (PENDING_APPROVAL) → approve/reject → `/pay` (blocked until APPROVED) / cancel.
+- `/payment-methods`, `/receipts` (list/get/by-payment, unique RCP-####, amount-in-words), `/refunds` (REQUESTED→approve posts, refundable-amount validated), `/reversals` (balancing entry, original preserved).
+- `/ledger` — paged/filtered entries (LED-####, CREDIT/DEBIT, type, source ref, method, posting status); `/ledger/adjustments`.
+- `/cash-accounts`, `/bank-accounts`, `/accounts/{id}` (+create/update/toggle).
+- `/reports` — daily-collection, monthly-collection, collections, rent-arrears, expenses, income-vs-expense, cashbook, payment-method-summary (all real data, date-range filters).
+
+### Integration contracts (HTTP only, token relayed)
+- Finance → Property `GET /rental-agreements/{id}/schedules` (verify at record time) and `POST /rent-schedules/{id}/payment` `{paidAmount}` (sync at post time; Property recomputes PENDING/PARTIAL/PAID).
+- Finance → Land `PATCH /land-acquisitions/{id}/finance-status` and `PATCH /land-sales/{id}/finance-status` `{paidAmount, financeStatus}` (sync at post time).
+- Sync endpoints require `RENT_SCHEDULE_PAYMENT_SYNC` / `LAND_PAYMENT_SYNC`; caller's JWT is forwarded. External-service failure → 503 `ExternalServiceException`.
+
+### Authorization
+ACCOUNTANT: create/record + post-payment methods, expenses, income, refunds, ledger/reports views. MANAGER: approval permissions (RENT_COLLECTION/LAND_PAYMENT/EXPENSE/INCOME/REFUND_APPROVE, LEDGER_ADJUST). Officers: view + create in their domain. ADMIN: all. Verified live: acc1 post→403, expense self-approve→403, unapproved pay→422.
+
+### Tests
+`FinanceServiceIntegrationTest` — 17/17: 401/403, partial+full allocation, overpayment 422, idempotency, concurrent payment, expense approval/reject/unapproved-pay, refund validation, reversal preserves original, receipt uniqueness, ledger entries, invalid external refs, service-unavailable 503, dashboard totals, date-range reports.
+
+### Frontend (`src/pages/finance/` — 11 screens + financeShared)
+- Dashboard (stat cards, income-vs-expense bars, recent payments), Rent Collection (agreement search via Property API → schedule cards → record/post), Land Acquisition Payments + Land Sale Receipts (target cards w/ finance status → record/post), Other Income, Expenses (approve/reject/pay workflow), Receipts (printable detail), Refunds (payment-ref→receipt lookup, approve/reject), Financial Ledger (filters), Cashbook (per-account movements + balance), Finance Reports (5 real reports + CSV export).
+- `financeFetch` (:8084, `VITE_FINANCE_API_URL`), `RecordPaymentModal`, XAF formatting, permission-gated nav/routes, `?new=1` deep links.
+
+### Live E2E (real `acc1` ACCOUNTANT JWT)
+- Rent: AGR-0001 schedule 1 → partial 60,000 (idempotent replay → same PAY-0001) + 90,000 → posted by admin → Property synced paidAmount=150,000 status PAID; overpayment 422.
+- Land: ACQ-0001 approved → 5,000,000 posted → Land synced PARTIALLY_PAID; SAL-0001 approved → 10,000,000 receipt → synced PARTIALLY_PAID.
+- Expense EXP-0001 → approve → paid (PAY-0005). Income INC-0001 → approved → posted. Refund RFD-0001 (30,000) validated + posted. PAY-0002 reversed → balancing DEBIT LED-0008, original preserved.
+- Dashboard/reports/ledger/receipts all return real persisted data.
+
+### Known limitations
+- Refund reduces Finance's target paidAmount, but the refunded amount is not pushed back to Property schedule paidAmount (schedule stays PAID while Finance shows residual outstanding — manual adjustment or a future refund-sync endpoint).
+- Account balances only move when a payment specifies `accountId`; payments posted without an account keep balances at 0 (explicit, by design).
+- Advance-rent overpayment workflow not implemented (rejected 422, per spec default).
+- Receipts/print is browser `window.print()`; PDF generation deferred to Document Service.
+
 ## Outstanding / next phases
 - Phase 3 API Gateway (:8080) — deferred; direct service URLs in dev.
-- Phase 6+ Finance, Document, Workflow, Reporting services — not started.
+- Phase 7+ Document, Workflow, Reporting services — not started.
 - Property images/documents and land document references — fields exist (`document_reference`/`documentReference`); actual storage deferred until Document Service.
 - `building_land_parcels` link table — deferred until Property↔Land integration requirements are defined.
 - GIS map visualization — coordinates stored and validated; map UI deferred.

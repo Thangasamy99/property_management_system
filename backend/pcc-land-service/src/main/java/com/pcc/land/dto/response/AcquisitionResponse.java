@@ -20,6 +20,8 @@ public record AcquisitionResponse(
         String documentReference,
         String approvalReference,
         String status,
+        BigDecimal paidAmount,
+        String financeStatus,
         String decidedByName,
         Instant decidedAt,
         String decisionNote,
@@ -30,7 +32,8 @@ public record AcquisitionResponse(
         return new AcquisitionResponse(a.getId(), a.getParcel().getId(), a.getParcel().getParcelReference(),
                 a.getParcel().getName(), a.getAcquisitionReference(), a.getSellerName(), a.getSellerReference(),
                 a.getSellerContact(), a.getAcquisitionDate(), a.getPurchasePrice(), a.getDocumentReference(),
-                a.getApprovalReference(), a.getStatus().name(), a.getDecidedByName(), a.getDecidedAt(),
+                a.getApprovalReference(), a.getStatus().name(), a.getPaidAmount(), a.getFinanceStatus(),
+                a.getDecidedByName(), a.getDecidedAt(),
                 a.getDecisionNote(), a.getCreatedByName(), a.getCreatedAt());
     }
 }

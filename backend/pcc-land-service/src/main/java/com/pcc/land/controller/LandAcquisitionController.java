@@ -59,6 +59,13 @@ public class LandAcquisitionController {
         return acquisitionService.complete(id, request);
     }
 
+    @PatchMapping("/{id}/finance-status")
+    @PreAuthorize("hasAuthority('LAND_PAYMENT_SYNC')")
+    public AcquisitionResponse financeStatus(@PathVariable Long id,
+                                             @Valid @RequestBody com.pcc.land.dto.request.FinanceStatusRequest req) {
+        return acquisitionService.updateFinanceStatus(id, req.paidAmount());
+    }
+
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('LAND_ACQUISITION_CREATE') or hasAuthority('LAND_ACQUISITION_MANAGE')")
     public AcquisitionResponse cancel(@PathVariable Long id, @RequestBody(required = false) DecisionRequest request) {

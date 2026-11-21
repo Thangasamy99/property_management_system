@@ -71,6 +71,13 @@ public class LandSaleController {
         return saleService.reject(id, request);
     }
 
+    @PatchMapping("/{id}/finance-status")
+    @PreAuthorize("hasAuthority('LAND_PAYMENT_SYNC')")
+    public SaleResponse financeStatus(@PathVariable Long id,
+                                      @Valid @RequestBody com.pcc.land.dto.request.FinanceStatusRequest req) {
+        return saleService.updateFinanceStatus(id, req.paidAmount());
+    }
+
     @PostMapping("/{id}/progress")
     @PreAuthorize("hasAuthority('LAND_SALE_APPROVE')")
     public SaleResponse progress(@PathVariable Long id) {

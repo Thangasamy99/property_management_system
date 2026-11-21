@@ -53,6 +53,12 @@ public class LandSale {
     @Column(nullable = false, length = 20)
     private SaleStatus status = SaleStatus.DRAFT;
 
+    @Column(nullable = false, precision = 18)
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false, length = 20)
+    private String financeStatus = "UNPAID";
+
     private Instant submittedAt;
 
     private Long decidedBy;

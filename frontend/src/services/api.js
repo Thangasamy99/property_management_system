@@ -1,6 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8081/api/v1'
 const PROPERTY_API_BASE = import.meta.env.VITE_PROPERTY_API_URL ?? 'http://localhost:8082/api/v1'
 const LAND_API_BASE = import.meta.env.VITE_LAND_API_URL ?? 'http://localhost:8083/api/v1'
+const FINANCE_API_BASE = import.meta.env.VITE_FINANCE_API_URL ?? 'http://localhost:8084/api/v1'
 
 // Access token lives in memory only (never localStorage).
 // Session restore happens through the HttpOnly refresh cookie.
@@ -53,6 +54,16 @@ export async function landFetch(path, options = {}, retry = true) {
   if (res.status === 401 && retry) {
     const restored = await refreshSession()
     if (restored) return landFetch(path, options, false)
+  }
+  return res
+}
+
+/** Same auth contract against the Finance Service (:8084). */
+export async function financeFetch(path, options = {}, retry = true) {
+  const res = await baseFetch(FINANCE_API_BASE, path, options)
+  if (res.status === 401 && retry) {
+    const restored = await refreshSession()
+    if (restored) return financeFetch(path, options, false)
   }
   return res
 }

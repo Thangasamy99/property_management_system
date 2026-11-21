@@ -7,10 +7,11 @@ import java.time.LocalDate;
 
 public record RentScheduleResponse(
         Long id, Long agreementId, LocalDate periodStart, LocalDate periodEnd,
-        LocalDate dueDate, BigDecimal amount, String status
+        LocalDate dueDate, BigDecimal amount, BigDecimal paidAmount, String status
 ) {
     public static RentScheduleResponse of(RentSchedule s) {
         return new RentScheduleResponse(s.getId(), s.getAgreement().getId(),
-                s.getPeriodStart(), s.getPeriodEnd(), s.getDueDate(), s.getAmount(), s.getStatus().name());
+                s.getPeriodStart(), s.getPeriodEnd(), s.getDueDate(), s.getAmount(),
+                s.getPaidAmount(), s.getStatus().name());
     }
 }

@@ -35,6 +35,9 @@ public class RentSchedule {
     @Column(nullable = false, precision = 18)
     private BigDecimal amount;
 
+    @Column(nullable = false, precision = 18)
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ScheduleStatus status = ScheduleStatus.PENDING;

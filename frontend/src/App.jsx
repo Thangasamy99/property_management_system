@@ -24,6 +24,17 @@ import AcquisitionsPage from './pages/land/AcquisitionsPage.jsx'
 import LandSalesPage from './pages/land/LandSalesPage.jsx'
 import TransfersPage from './pages/land/TransfersPage.jsx'
 import TransactionsPage from './pages/land/TransactionsPage.jsx'
+import FinanceDashboardPage from './pages/finance/FinanceDashboardPage.jsx'
+import RentCollectionPage from './pages/finance/RentCollectionPage.jsx'
+import LandAcquisitionPaymentsPage from './pages/finance/LandAcquisitionPaymentsPage.jsx'
+import LandSaleReceiptsPage from './pages/finance/LandSaleReceiptsPage.jsx'
+import OtherIncomePage from './pages/finance/OtherIncomePage.jsx'
+import ExpensesPage from './pages/finance/ExpensesPage.jsx'
+import ReceiptsPage from './pages/finance/ReceiptsPage.jsx'
+import RefundsPage from './pages/finance/RefundsPage.jsx'
+import LedgerPage from './pages/finance/LedgerPage.jsx'
+import CashbookPage from './pages/finance/CashbookPage.jsx'
+import FinanceReportsPage from './pages/finance/FinanceReportsPage.jsx'
 
 function RootRedirect() {
   const { user, ready } = useAuth()
@@ -94,6 +105,38 @@ export default function App() {
                 <Route path="/land-sales" element={<LandSalesPage />} />
                 <Route path="/land-transfers" element={<TransfersPage />} />
                 <Route path="/land-transactions" element={<TransactionsPage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute permission="FINANCE_DASHBOARD_VIEW" />}>
+                <Route path="/finance" element={<FinanceDashboardPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="RENT_COLLECTION_VIEW" />}>
+                <Route path="/finance/rent-collections" element={<RentCollectionPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="LAND_PAYMENT_VIEW" />}>
+                <Route path="/finance/land-acquisition-payments" element={<LandAcquisitionPaymentsPage />} />
+                <Route path="/finance/land-sale-receipts" element={<LandSaleReceiptsPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="INCOME_VIEW" />}>
+                <Route path="/finance/other-income" element={<OtherIncomePage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="EXPENSE_VIEW" />}>
+                <Route path="/finance/expenses" element={<ExpensesPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="RECEIPT_VIEW" />}>
+                <Route path="/finance/receipts" element={<ReceiptsPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="REFUND_VIEW" />}>
+                <Route path="/finance/refunds" element={<RefundsPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="LEDGER_VIEW" />}>
+                <Route path="/finance/ledger" element={<LedgerPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="CASH_ACCOUNT_VIEW" />}>
+                <Route path="/finance/cashbook" element={<CashbookPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="FINANCIAL_REPORT_VIEW" />}>
+                <Route path="/finance/reports" element={<FinanceReportsPage />} />
               </Route>
             </Route>
           </Route>

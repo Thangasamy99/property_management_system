@@ -128,6 +128,21 @@ public class LandAcquisitionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Acquisition not found"));
     }
 
+    /**
+     * Finance integration contract: sync money received (Finance Service is
+     * the source of truth for payments; this only mirrors the status).
+     */
+    @Transactional
+    public AcquisitionResponse updateFinanceStatus(Long id, java.math.BigDecimal paidAmount) {
+        LandAcquisition a = find(id);
+        a.setPaidAmount(paidAmount.max(java.math.BigDecimal.ZERO));
+        java.math.BigDecimal total = a.getPurchasePrice() == null
+                ? java.math.BigDecimal.ZERO : a.getPurchasePrice();
+        a.setFinanceStatus(a.getPaidAmount().signum() <= 0 ? "UNPAID"
+                : a.getPaidAmount().compareTo(total) >= 0 ? "PAID" : "PARTIALLY_PAID");
+        return AcquisitionResponse.from(acquisitionRepository.save(a));
+    }
+
     private void require(boolean condition, String message) {
         if (!condition) {
             throw new BusinessRuleException(message);

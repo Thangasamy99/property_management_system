@@ -21,6 +21,8 @@ public record SaleResponse(
         LocalDate agreementDate,
         String documentReference,
         String status,
+        BigDecimal paidAmount,
+        String financeStatus,
         Instant submittedAt,
         String decidedByName,
         Instant decidedAt,
@@ -32,7 +34,8 @@ public record SaleResponse(
         return new SaleResponse(s.getId(), s.getParcel().getId(), s.getParcel().getParcelReference(),
                 s.getParcel().getName(), s.getSaleReference(), s.getBuyerName(), s.getBuyerReference(),
                 s.getBuyerContact(), s.getProposedPrice(), s.getAgreedPrice(), s.getAgreementReference(),
-                s.getAgreementDate(), s.getDocumentReference(), s.getStatus().name(), s.getSubmittedAt(),
+                s.getAgreementDate(), s.getDocumentReference(), s.getStatus().name(),
+                s.getPaidAmount(), s.getFinanceStatus(), s.getSubmittedAt(),
                 s.getDecidedByName(), s.getDecidedAt(), s.getDecisionNote(), s.getCreatedByName(), s.getCreatedAt());
     }
 }

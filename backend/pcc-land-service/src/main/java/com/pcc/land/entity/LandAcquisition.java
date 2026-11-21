@@ -50,6 +50,12 @@ public class LandAcquisition {
     @Column(nullable = false, length = 20)
     private AcquisitionStatus status = AcquisitionStatus.PENDING;
 
+    @Column(nullable = false, precision = 18)
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
+    @Column(nullable = false, length = 20)
+    private String financeStatus = "UNPAID";
+
     private Long decidedBy;
 
     private String decidedByName;

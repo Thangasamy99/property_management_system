@@ -190,6 +190,22 @@ public class LandSaleService {
         s.setDecidedAt(Instant.now());
     }
 
+    /**
+     * Finance integration contract: sync money received (Finance Service is
+     * the source of truth for payments; this only mirrors the status).
+     */
+    @Transactional
+    public SaleResponse updateFinanceStatus(Long id, java.math.BigDecimal paidAmount) {
+        LandSale s = find(id);
+        s.setPaidAmount(paidAmount.max(java.math.BigDecimal.ZERO));
+        java.math.BigDecimal total = s.getAgreedPrice() != null && s.getAgreedPrice().signum() > 0
+                ? s.getAgreedPrice()
+                : (s.getProposedPrice() == null ? java.math.BigDecimal.ZERO : s.getProposedPrice());
+        s.setFinanceStatus(s.getPaidAmount().signum() <= 0 ? "UNPAID"
+                : s.getPaidAmount().compareTo(total) >= 0 ? "PAID" : "PARTIALLY_PAID");
+        return SaleResponse.from(saleRepository.save(s));
+    }
+
     private LandSale find(Long id) {
         return saleRepository.findById(id)
                 .filter(s -> s.getParcel().getDeletedAt() == null)
