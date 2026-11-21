@@ -40,6 +40,12 @@ import DocumentsPage from './pages/documents/DocumentsPage.jsx'
 import DocumentDetailPage from './pages/documents/DocumentDetailPage.jsx'
 import CategoriesPage from './pages/documents/CategoriesPage.jsx'
 import ExpiringDocumentsPage from './pages/documents/ExpiringDocumentsPage.jsx'
+import WorkflowDashboardPage from './pages/workflows/WorkflowDashboardPage.jsx'
+import RequestsPage from './pages/workflows/RequestsPage.jsx'
+import WorkflowDetailPage from './pages/workflows/WorkflowDetailPage.jsx'
+import DefinitionsPage from './pages/workflows/DefinitionsPage.jsx'
+import DelegationsPage from './pages/workflows/DelegationsPage.jsx'
+import NotificationsPage from './pages/workflows/NotificationsPage.jsx'
 
 function RootRedirect() {
   const { user, ready } = useAuth()
@@ -158,6 +164,20 @@ export default function App() {
               </Route>
               <Route element={<ProtectedRoute permission="DOCUMENT_EXPIRY_VIEW" />}>
                 <Route path="/documents/expiring" element={<ExpiringDocumentsPage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute permission="WORKFLOW_VIEW" />}>
+                <Route path="/workflows" element={<WorkflowDashboardPage />} />
+                <Route path="/workflows/all" element={<RequestsPage mode="all" />} />
+                <Route path="/workflows/mine" element={<RequestsPage mode="mine" />} />
+                <Route path="/workflows/pending" element={<RequestsPage mode="pending" />} />
+                <Route path="/workflows/overdue" element={<RequestsPage mode="overdue" />} />
+                <Route path="/workflows/returned" element={<RequestsPage mode="returned" />} />
+                <Route path="/workflows/history" element={<RequestsPage mode="history" />} />
+                <Route path="/workflows/detail/:id" element={<WorkflowDetailPage />} />
+                <Route path="/workflows/definitions" element={<DefinitionsPage />} />
+                <Route path="/workflows/delegations" element={<DelegationsPage />} />
+                <Route path="/workflows/notifications" element={<NotificationsPage />} />
               </Route>
             </Route>
           </Route>

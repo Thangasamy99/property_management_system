@@ -152,8 +152,49 @@ Dashboard, All Documents, Property/Land/Finance Documents (domain-filtered `Docu
 ### Run
 `SERVER_PORT=8085 DB_URL=... DB_USERNAME=... DB_PASSWORD=... JWT_SECRET=... DOC_STORAGE_ROOT=/data/pcc-docs DOC_MAX_FILE_SIZE=26214400 PROPERTY_SERVICE_URL=... LAND_SERVICE_URL=... FINANCE_SERVICE_URL=... java -jar pcc-document-service.jar` — storage root must be private (outside static/public dirs).
 
+## Phase 8: Workflow & Approval Management Service — COMPLETE
+`pcc-workflow-service` (:8086, `pcc_workflow_db`) — independent microservice, same JWT contract. Configurable multi-level approval workflows across Property/Land/Finance/Document, sequential levels, delegation, notifications, durable integration outbox — owning services remain the source of truth; `COMPLETED` only after confirmed downstream success.
+
+### Migrations
+- Workflow `V1` — `workflow_definitions` (9 seeded) + `workflow_levels`, `workflow_instances` (unique WF-###### ref, optimistic `@Version`), `workflow_approval_tasks` (unique instance+level+cycle; cycle supports return→resubmit), `workflow_actions`, `workflow_delegations`, `workflow_audit_logs`, `notifications` (recipient_id or recipient_role), `workflow_integration_outbox`.
+- Identity `V7` — 13 `WORKFLOW_*` + `NOTIFICATION_VIEW` permissions. ADMIN all; MANAGER approve/reject/return/delegate/report; ACCOUNTANT approve only (finance scopes); PROPERTY/LAND_OFFICER submit/cancel/view — no approve/reject/return/configure/delegate.
+
+### APIs (`/api/v1`)
+- `/workflows` — submit (definitionId, entityRef, amount, priority, description, documentRefs); GET search w/ status/module/type/submitter/priority/date/q + paging/sort; `/mine`, `/pending-approvals`, `/overdue`, `/dashboard`.
+- `/workflows/{id}/approve|reject|return|comment|resubmit|cancel` — reject/return require reason; only current-level assignee (direct, role, or in-scope delegate); no skipping; no duplicates; no self-approval; pessimistic state checks + `@Version`.
+- `/workflows/{id}/tasks|history|audit|integrations`; `POST /workflows/integrations/{outboxId}/retry`.
+- `/workflow-definitions` — GET (module filter) for WORKFLOW_VIEW; POST/PUT for WORKFLOW_CONFIGURE; levels: order, name, approverRole or approverId, minAmount threshold, mandatory.
+- `/delegations` — scoped temp delegation (module/definitionId, start/end dates, reason); `/notifications` (+ `/unread-count`, `/{id}/read`, `/read-all`) — user + role-targeted visibility.
+
+### Integration outbox
+- On final approval: outbox row persisted in the same tx (integration_ref = WF-######-I1), then best-effort dispatch relays the approver's JWT to the owning service (`{id}` path substitution; JSON payload: workflowRef/entityRef/approvedBy/source).
+- Success → instance COMPLETED; 4xx (except 408/429) → PERMANENT → INTEGRATION_FAILED; transient/5xx → FAILED + retry_count → scheduled sweep re-queues, manual retry relays the retrier's JWT (overrides PERMANENT). SUCCESS rows short-circuit (idempotent).
+- Seeded definitions wire real endpoints: EXPENSE/REFUND → Finance `/expenses/{id}/approve` `/refunds/{id}/approve`; LAND_ACQ/SALE → Land `/land-acquisitions|land-sales/{id}/approve`; PROP_REGISTRATION → Property `PATCH /properties/{id}/status`. RENTAL_*, LAND_TRANSFER, DOC_VERIFICATION have no integration (approval record only).
+
+### Tests
+`WorkflowServiceIntegrationTest` — 17/17: seeded defs, configure 403/200, submit+task, self/unauthorized/wrong-role approver denied, sequential multi-level (no skipping, duplicate blocked), reject-reason required, return→resubmit (task cycle), notifications, integration dispatch + failure→manual-retry→COMPLETED, delegation + date validation, history/audit, search/pagination.
+
+### Frontend (`src/pages/workflows/` — 9 screens + SubmitModal)
+Dashboard (stat cards + pending list), All/Mine/Pending/Overdue/Returned/History (`RequestsPage` modes), Definitions (level editor modal), Detail (timeline, actions w/ mandatory reasons, integrations + retry, action history), Delegations, Notifications (unread, mark-read). `wfFetch` (:8086, `VITE_WORKFLOW_API_URL`) shares the auth contract; nav/routes permission-gated.
+
+### Live E2E (real po1/lo1/acc1/mgr1/admin JWTs)
+- po1 submits WF-000001 (expense EXP-0002) → MANAGER task + mgr1 unread notification; lo1 approve → 403; mgr1 approves → Finance `/expenses/2/approve` invoked w/ mgr1's JWT → expense APPROVED (approvedBy mgr1) → workflow COMPLETED; outbox SUCCESS, history preserved.
+- Land: acquisition ACQ-0002 → WF-000002 → mgr1 approve → dispatch failed (500: text/plain body bug, fixed to application/json) → manual retry → acquisition APPROVED → COMPLETED.
+- Failure: expense 999 → approve → downstream 404 → PERMANENT → INTEGRATION_FAILED w/ error; manual retry path verified.
+- Delegation: mgr1→acc1 (FINANCE scope) — acc1 approved po1's MANAGER-level task (actedBy=acc1, delegated_from tracked); acc1's own submission still blocked by self-approval guard (403). Delegate's downstream call 403 (owns no EXPENSE_APPROVE) → PERMANENT → mgr1 retry → SUCCESS → COMPLETED.
+- ADMIN created INCOME_APPROVAL live; po1 definition-create → 403.
+
+### Known limitations
+- Integration payload is generic (workflowRef/entityRef/approvedBy); endpoints needing business-specific bodies (e.g. Property `PATCH /properties/{id}/status` wants {status,reason}) will reject — add per-definition payload templates if those paths are activated.
+- Scheduled retry cannot dispatch without a relayable JWT — offline failures wait for request-driven/manual retry (no service-to-service client credential yet).
+- Delegation on role-based levels can't verify the delegator actually held the role (no cross-service user lookup) — scope is enforced by module/definition + delegate's own WORKFLOW_APPROVE permission.
+- Escalation config = due-date derived from escalationDays; auto-reassignment to a higher level not implemented.
+
+### Run
+`SERVER_PORT=8086 DB_URL=... DB_USERNAME=... DB_PASSWORD=... JWT_SECRET=... PROPERTY_SERVICE_URL=... LAND_SERVICE_URL=... FINANCE_SERVICE_URL=... DOCUMENT_SERVICE_URL=... java -jar pcc-workflow-service.jar`
+
 ## Outstanding / next phases
 - Phase 3 API Gateway (:8080) — deferred; direct service URLs in dev.
-- Phase 8+ Workflow, Reporting services — not started.
+- Phase 9+ Reporting service — not started.
 - `building_land_parcels` link table — deferred until Property↔Land integration requirements are defined.
 - GIS map visualization — coordinates stored and validated; map UI deferred.
