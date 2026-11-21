@@ -3,7 +3,8 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, ShieldCheck, History, ScrollText, UserCircle,
   LogOut, Menu, ChevronDown, ChevronRight, ChevronsLeft, Plus, Bell, KeyRound,
-  ShieldAlert, Search, UserPlus, ShieldPlus,
+  ShieldAlert, Search, UserPlus, ShieldPlus, Building2, Building, BedDouble,
+  Contact, FileSignature, Wrench,
 } from 'lucide-react'
 import { landingPathFor, useAuth } from '../context/AuthContext'
 import { apiFetch } from '../services/api'
@@ -12,6 +13,12 @@ import logo from '../assets/pcc-logo.png'
 
 const NAV_ITEMS = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/properties', label: 'Properties', permission: 'PROPERTY_VIEW', icon: Building2, add: '/properties?new=1' },
+  { to: '/buildings', label: 'Buildings', permission: 'BUILDING_VIEW', icon: Building },
+  { to: '/apartments', label: 'Apartments', permission: 'APARTMENT_VIEW', icon: BedDouble },
+  { to: '/tenants', label: 'Tenants', permission: 'TENANT_VIEW', icon: Contact },
+  { to: '/rentals', label: 'Rentals', permission: 'RENTAL_VIEW', icon: FileSignature },
+  { to: '/maintenance', label: 'Maintenance', permission: 'MAINTENANCE_VIEW', icon: Wrench },
   { to: '/users', label: 'Employees', permission: 'USER_VIEW', icon: Users, add: '/users?new=1', badgeKey: 'employees' },
   { to: '/roles', label: 'Roles & Permissions', permission: 'ROLE_VIEW', icon: ShieldCheck, add: '/roles?new=1' },
   { to: '/login-history', label: 'Login History', icon: History },
@@ -20,6 +27,12 @@ const NAV_ITEMS = [
 ]
 
 const PAGE_TITLES = {
+  '/properties': 'Properties',
+  '/buildings': 'Buildings',
+  '/apartments': 'Apartments',
+  '/tenants': 'Tenants',
+  '/rentals': 'Rental Agreements',
+  '/maintenance': 'Maintenance',
   '/users': 'Employees',
   '/roles': 'Roles & Permissions',
   '/login-history': 'Login History',

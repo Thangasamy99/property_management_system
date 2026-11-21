@@ -1,4 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8081/api/v1'
+const PROPERTY_API_BASE = import.meta.env.VITE_PROPERTY_API_URL ?? 'http://localhost:8082/api/v1'
 
 // Access token lives in memory only (never localStorage).
 // Session restore happens through the HttpOnly refresh cookie.
@@ -11,7 +12,11 @@ export const tokenStore = {
 }
 
 async function rawFetch(path, options = {}) {
-  return fetch(`${API_BASE}${path}`, {
+  return baseFetch(API_BASE, path, options)
+}
+
+async function baseFetch(base, path, options = {}) {
+  return fetch(`${base}${path}`, {
     credentials: 'include', // send the HttpOnly refresh cookie
     headers: {
       'Content-Type': 'application/json',
@@ -27,6 +32,16 @@ export async function apiFetch(path, options = {}, retry = true) {
   if (res.status === 401 && retry) {
     const restored = await refreshSession()
     if (restored) return apiFetch(path, options, false)
+  }
+  return res
+}
+
+/** Same auth contract against the Property Service (:8082). */
+export async function propertyFetch(path, options = {}, retry = true) {
+  const res = await baseFetch(PROPERTY_API_BASE, path, options)
+  if (res.status === 401 && retry) {
+    const restored = await refreshSession()
+    if (restored) return propertyFetch(path, options, false)
   }
   return res
 }

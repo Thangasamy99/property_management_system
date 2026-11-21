@@ -1,0 +1,39 @@
+package com.pcc.property;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
+/** Mints access tokens identical to what pcc-identity-service issues. */
+public final class JwtTestHelper {
+
+    public static final String SECRET =
+            "test-secret-key-for-pcc-property-service-must-be-64-plus-chars!!";
+
+    private JwtTestHelper() {}
+
+    public static String token(Set<String> roles, Set<String> permissions) {
+        SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject("1")
+                .issuer("pcc-identity-service")
+                .audience().add("pcc-property-management").and()
+                .claim("username", "test.user")
+                .claim("employeeCode", "PCC-TEST")
+                .claim("roles", List.copyOf(roles))
+                .claim("permissions", List.copyOf(permissions))
+                .claim("type", "access")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(15, ChronoUnit.MINUTES)))
+                .signWith(key)
+                .compact();
+    }
+}
