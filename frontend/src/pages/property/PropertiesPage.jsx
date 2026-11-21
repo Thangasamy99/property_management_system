@@ -4,6 +4,7 @@ import { propertyFetch } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/Modal'
+import EntityDocumentsPanel from '../documents/EntityDocumentsPanel'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import DataTable from '../../components/DataTable'
 import RowActionsMenu from '../../components/RowActionsMenu'
@@ -258,6 +259,7 @@ export default function PropertiesPage() {
             {viewProp.description && <div className="col-span-2"><dt className="text-xs text-slate-400">Description</dt><dd>{viewProp.description}</dd></div>}
           </dl>
         )}
+        {viewProp && <EntityDocumentsPanel entityType="PROPERTY" entityRef={viewProp.id} domain="PROPERTY" />}
       </Modal>
 
       <Modal open={!!statusProp} onClose={() => setStatusProp(null)} title={`Status — ${statusProp?.code}`} width="max-w-sm">

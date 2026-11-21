@@ -4,6 +4,7 @@ import { landFetch } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/Modal'
+import EntityDocumentsPanel from '../documents/EntityDocumentsPanel'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import DataTable from '../../components/DataTable'
 import RowActionsMenu from '../../components/RowActionsMenu'
@@ -283,7 +284,7 @@ function ParcelDetail({ parcel, onClose }) {
 
   const tabs = [
     ['details', 'Details'], ['status', 'Status History'], ['surveys', 'Surveys'],
-    ['coordinates', 'Coordinates'], ['ownership', 'Ownership'], ['transactions', 'Transactions'],
+    ['coordinates', 'Coordinates'], ['ownership', 'Ownership'], ['transactions', 'Transactions'], ['documents', 'Documents'],
   ]
 
   return (
@@ -367,7 +368,11 @@ function ParcelDetail({ parcel, onClose }) {
                   ))}
                 </ul>
           )}
-        </div>
+        
+          {tab === 'documents' && (
+            <EntityDocumentsPanel entityType="LAND_PARCEL" entityRef={parcel.id} domain="LAND" />
+          )}
+</div>
       )}
     </Modal>
   )

@@ -2,6 +2,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8081/api/v1'
 const PROPERTY_API_BASE = import.meta.env.VITE_PROPERTY_API_URL ?? 'http://localhost:8082/api/v1'
 const LAND_API_BASE = import.meta.env.VITE_LAND_API_URL ?? 'http://localhost:8083/api/v1'
 const FINANCE_API_BASE = import.meta.env.VITE_FINANCE_API_URL ?? 'http://localhost:8084/api/v1'
+const DOCUMENT_API_BASE = import.meta.env.VITE_DOCUMENT_API_URL ?? 'http://localhost:8085/api/v1'
 
 // Access token lives in memory only (never localStorage).
 // Session restore happens through the HttpOnly refresh cookie.
@@ -64,6 +65,31 @@ export async function financeFetch(path, options = {}, retry = true) {
   if (res.status === 401 && retry) {
     const restored = await refreshSession()
     if (restored) return financeFetch(path, options, false)
+  }
+  return res
+}
+
+/** Same auth contract against the Document Service (:8085). */
+export async function docFetch(path, options = {}, retry = true) {
+  const res = await baseFetch(DOCUMENT_API_BASE, path, options)
+  if (res.status === 401 && retry) {
+    const restored = await refreshSession()
+    if (restored) return docFetch(path, options, false)
+  }
+  return res
+}
+
+/** Multipart upload - lets fetch set the boundary Content-Type itself. */
+export async function docUpload(path, formData, retry = true) {
+  const res = await fetch(`${DOCUMENT_API_BASE}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { ...(tokenStore.get() ? { Authorization: `Bearer ${tokenStore.get()}` } : {}) },
+    body: formData,
+  })
+  if (res.status === 401 && retry) {
+    const restored = await refreshSession()
+    if (restored) return docUpload(path, formData, false)
   }
   return res
 }

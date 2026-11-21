@@ -114,14 +114,46 @@ ACCOUNTANT: create/record + post-payment methods, expenses, income, refunds, led
 - Dashboard/reports/ledger/receipts all return real persisted data.
 
 ### Known limitations
-- Refund reduces Finance's target paidAmount, but the refunded amount is not pushed back to Property schedule paidAmount (schedule stays PAID while Finance shows residual outstanding — manual adjustment or a future refund-sync endpoint).
+- ~~Refund reduces Finance's target paidAmount, but the refunded amount is not pushed back to Property schedule paidAmount~~ — FIXED (commit `3ce0ca4`): Finance V2 `payment_allocations.allocation_ref`/`reversed_amount` + `sync_outbox` (persisted with posting tx, confirmed-success marking, 60s retry, manual retry/reconcile endpoints); Property V3 `rent_schedule_payments`/`_payment_reversals` (`POST /rent-schedules/{id}/payments` + `/payment-reversals`); Land V3 `land_finance_payments`/`_payment_reversals` (same contract on acquisitions + sales). Scheduled/startup dispatch without a relayable JWT stays PENDING until a request-driven or manual retry.
 - Account balances only move when a payment specifies `accountId`; payments posted without an account keep balances at 0 (explicit, by design).
 - Advance-rent overpayment workflow not implemented (rejected 422, per spec default).
 - Receipts/print is browser `window.print()`; PDF generation deferred to Document Service.
 
+## Phase 7: Document Service — COMPLETE
+`pcc-document-service` (:8085, `pcc_document_db`) — independent microservice, same JWT contract. Multipart upload with magic-byte validation, private local filesystem storage behind an abstraction (S3-compatible replaceable), external-ref associations over relayed-JWT HTTP — no cross-service DB access.
+
+### Migrations
+- Document `V1` — `document_categories` (21 seeded across PROPERTY/LAND/FINANCE/ADMINISTRATION), `documents` (unique DOC-###### ref), `document_versions` (UUID storage_key, unique per doc+version), `document_associations` (unique doc+type+ref), `document_audit_logs`.
+- Identity `V6` — 14 `DOCUMENT_*` permissions; ADMIN all; MANAGER operational + archive/restore + audit; ACCOUNTANT finance-domain ops; PROPERTY/LAND_OFFICER domain-scoped upload/view/version/associate (no archive, no category manage, no audit).
+
+### APIs (`/api/v1`)
+- `/documents` — multipart upload (category, description, documentDate, expiryDate, optional `associations` JSON param); GET search (status/categoryId/domain/expired/q/date-range, paging+sort); `GET|PUT /{id}`.
+- `/documents/{id}/versions` (POST new, GET history), `/download?version=n`, `/preview?version=n` (attachment vs inline; PDF+images previewable), `/archive`, `/restore`.
+- `/documents/{id}/associations` (GET/POST/DELETE), `/audit-history`, `/for-entity?type&ref`, `/expiry?bucket=expired|30|60|none`, `/expiry/summary`, `/categories` (GET; POST/PUT = CATEGORY_MANAGE), `/dashboard`.
+
+### Storage + validation
+- `DocumentStorage` abstraction; `LocalDocumentStorage` writes `root/<2-char prefix>/<uuid>` via tmp + ATOMIC_MOVE, cleans partial files, whitelists keys (path-traversal proof). Magic bytes verified: PDF/JPEG/PNG directly; OLE2 (.doc/.xls) and ZIP (.docx/.xlsx) disambiguated by extension. Stored file verified before DB commit; deleted on failed insert. `DOC_STORAGE_ROOT`, `DOC_MAX_FILE_SIZE`, `DOC_ALLOWED_MIME` env-configurable.
+- `ExternalEntityValidator` validates external refs over relayed-JWT GETs to Property/Land/Finance where a lookup exists; `OTHER`/`LAND_TRANSFER` are free-form. Associations store external refs only — no cross-DB FKs.
+
+### Tests
+`DocumentServiceIntegrationTest` — 21/21: seeded categories, 401/403 perms, upload success, invalid type, content mismatch, oversize, search/pagination, version upload/history/v1-download, download/preview perms, association create/dup/unknown-ref/for-entity, archive+restore (archived-version blocked), expiry summary+buckets, audit actions, path-traversal filename, dashboard. Regression: Identity 60/60, Property 23/23, Land 16/16, Finance 22/22.
+
+### Frontend (`src/pages/documents/` — 9 screens)
+Dashboard, All Documents, Property/Land/Finance Documents (domain-filtered `DocumentsPage`), Categories (admin manage), Expiring (bucket cards), Archived (restore), Document Detail (Details/Versions/Associations/Audit tabs). `UploadModal` (drag-drop + category + metadata + inline association), `EntityDocumentsPanel` embedded in Properties view modal, Rentals agreement details, Land parcel detail. `docFetch`/`docUpload` share the JWT + refresh contract; nav permission-gated.
+
+### Live E2E (real admin + po1 PROPERTY_OFFICER JWTs)
+- DOC-000001 uploaded with a PROPERTY association validated live against :8082; download byte-identical; v2 uploaded → v1 download preserved.
+- Unknown PROPERTY/LAND_PARCEL refs → 400 (relayed-JWT lookup); unauthenticated download → 401; fake-PDF content and .exe → 422; po1 archive/category-manage → 403 while upload/view → 200; expiry-required category → 422; expiry buckets + dashboard verified.
+
+### Known limitations
+- Local filesystem only (S3 adapter designed-for, not implemented); preview inline only for PDF/images; expiry list endpoints unpaginated.
+- `LAND_TRANSFER`/`OTHER` refs unvalidated (no lookup endpoint yet); receipt PDF generation still browser print.
+
+### Run
+`SERVER_PORT=8085 DB_URL=... DB_USERNAME=... DB_PASSWORD=... JWT_SECRET=... DOC_STORAGE_ROOT=/data/pcc-docs DOC_MAX_FILE_SIZE=26214400 PROPERTY_SERVICE_URL=... LAND_SERVICE_URL=... FINANCE_SERVICE_URL=... java -jar pcc-document-service.jar` — storage root must be private (outside static/public dirs).
+
 ## Outstanding / next phases
 - Phase 3 API Gateway (:8080) — deferred; direct service URLs in dev.
-- Phase 7+ Document, Workflow, Reporting services — not started.
-- Property images/documents and land document references — fields exist (`document_reference`/`documentReference`); actual storage deferred until Document Service.
+- Phase 8+ Workflow, Reporting services — not started.
 - `building_land_parcels` link table — deferred until Property↔Land integration requirements are defined.
 - GIS map visualization — coordinates stored and validated; map UI deferred.

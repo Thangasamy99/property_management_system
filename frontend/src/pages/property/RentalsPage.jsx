@@ -3,6 +3,7 @@ import { propertyFetch } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import Modal from '../../components/Modal'
+import EntityDocumentsPanel from '../documents/EntityDocumentsPanel'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import DataTable from '../../components/DataTable'
 import RowActionsMenu from '../../components/RowActionsMenu'
@@ -141,6 +142,7 @@ function AgreementDetails({ agreement, onClose }) {
           </div>
 
           {tab === 'details' && (
+            <>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
               <div><dt className="text-xs text-slate-400">Tenant</dt><dd className="font-medium">{agreement.tenantName}</dd></div>
               <div><dt className="text-xs text-slate-400">Unit</dt><dd>{agreement.buildingName} · {agreement.apartmentNumber}</dd></div>
@@ -156,6 +158,8 @@ function AgreementDetails({ agreement, onClose }) {
               )}
               {agreement.terminationReason && <div className="col-span-2"><dt className="text-xs text-slate-400">Termination reason</dt><dd>{agreement.terminationReason}</dd></div>}
             </dl>
+            <EntityDocumentsPanel entityType="RENTAL_AGREEMENT" entityRef={agreement.id} domain="PROPERTY" />
+            </>
           )}
 
           {tab === 'schedule' && (

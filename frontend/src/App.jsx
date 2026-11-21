@@ -35,6 +35,11 @@ import RefundsPage from './pages/finance/RefundsPage.jsx'
 import LedgerPage from './pages/finance/LedgerPage.jsx'
 import CashbookPage from './pages/finance/CashbookPage.jsx'
 import FinanceReportsPage from './pages/finance/FinanceReportsPage.jsx'
+import DocumentDashboardPage from './pages/documents/DocumentDashboardPage.jsx'
+import DocumentsPage from './pages/documents/DocumentsPage.jsx'
+import DocumentDetailPage from './pages/documents/DocumentDetailPage.jsx'
+import CategoriesPage from './pages/documents/CategoriesPage.jsx'
+import ExpiringDocumentsPage from './pages/documents/ExpiringDocumentsPage.jsx'
 
 function RootRedirect() {
   const { user, ready } = useAuth()
@@ -137,6 +142,22 @@ export default function App() {
               </Route>
               <Route element={<ProtectedRoute permission="FINANCIAL_REPORT_VIEW" />}>
                 <Route path="/finance/reports" element={<FinanceReportsPage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute permission="DOCUMENT_VIEW" />}>
+                <Route path="/documents" element={<DocumentDashboardPage />} />
+                <Route path="/documents/all" element={<DocumentsPage />} />
+                <Route path="/documents/property" element={<DocumentsPage domain="PROPERTY" />} />
+                <Route path="/documents/land" element={<DocumentsPage domain="LAND" />} />
+                <Route path="/documents/finance" element={<DocumentsPage domain="FINANCE" />} />
+                <Route path="/documents/archived" element={<DocumentsPage archived />} />
+                <Route path="/documents/:id" element={<DocumentDetailPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="DOCUMENT_CATEGORY_VIEW" />}>
+                <Route path="/documents/categories" element={<CategoriesPage />} />
+              </Route>
+              <Route element={<ProtectedRoute permission="DOCUMENT_EXPIRY_VIEW" />}>
+                <Route path="/documents/expiring" element={<ExpiringDocumentsPage />} />
               </Route>
             </Route>
           </Route>
