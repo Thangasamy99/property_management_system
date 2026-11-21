@@ -275,7 +275,7 @@ export default function DashboardLayout() {
             const Icon = item.icon
             return (
               <NavLink
-                key={item.label}
+                key={item.to}
                 to={item.to}
                 title={item.label}
                 aria-label={item.label}
@@ -409,7 +409,7 @@ export default function DashboardLayout() {
               {items.map((item) => {
                 const Icon = item.icon
                 return (
-                  <li key={item.label}>
+                  <li key={item.to}>
                     <div className="group relative flex items-center">
                       <NavLink
                         to={item.to}
