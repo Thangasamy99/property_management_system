@@ -4,7 +4,8 @@ import {
   LayoutDashboard, Users, ShieldCheck, History, ScrollText, UserCircle,
   LogOut, Menu, ChevronDown, ChevronRight, ChevronsLeft, Plus, Bell, KeyRound,
   ShieldAlert, Search, UserPlus, ShieldPlus, Building2, Building, BedDouble,
-  Contact, FileSignature, Wrench,
+  Contact, FileSignature, Wrench, LandPlot, Map, Ruler, KeySquare, Landmark,
+  HandCoins, ArrowLeftRight, ReceiptText,
 } from 'lucide-react'
 import { landingPathFor, useAuth } from '../context/AuthContext'
 import { apiFetch } from '../services/api'
@@ -19,6 +20,14 @@ const NAV_ITEMS = [
   { to: '/tenants', label: 'Tenants', permission: 'TENANT_VIEW', icon: Contact },
   { to: '/rentals', label: 'Rentals', permission: 'RENTAL_VIEW', icon: FileSignature },
   { to: '/maintenance', label: 'Maintenance', permission: 'MAINTENANCE_VIEW', icon: Wrench },
+  { to: '/land', label: 'Land Overview', permission: 'LAND_VIEW', icon: LandPlot },
+  { to: '/land-parcels', label: 'Land Parcels', permission: 'LAND_VIEW', icon: Map, add: '/land-parcels?new=1' },
+  { to: '/land-surveys', label: 'Surveys', permission: 'LAND_VIEW', icon: Ruler, add: '/land-surveys?new=1' },
+  { to: '/land-ownership', label: 'Ownership', permission: 'LAND_VIEW', icon: KeySquare, add: '/land-ownership?new=1' },
+  { to: '/land-acquisitions', label: 'Acquisitions', permission: 'LAND_VIEW', icon: Landmark, add: '/land-acquisitions?new=1' },
+  { to: '/land-sales', label: 'Land Sales', permission: 'LAND_VIEW', icon: HandCoins },
+  { to: '/land-transfers', label: 'Transfers', permission: 'LAND_VIEW', icon: ArrowLeftRight },
+  { to: '/land-transactions', label: 'Transactions', permission: 'LAND_VIEW', icon: ReceiptText },
   { to: '/users', label: 'Employees', permission: 'USER_VIEW', icon: Users, add: '/users?new=1', badgeKey: 'employees' },
   { to: '/roles', label: 'Roles & Permissions', permission: 'ROLE_VIEW', icon: ShieldCheck, add: '/roles?new=1' },
   { to: '/login-history', label: 'Login History', icon: History },
@@ -33,6 +42,14 @@ const PAGE_TITLES = {
   '/tenants': 'Tenants',
   '/rentals': 'Rental Agreements',
   '/maintenance': 'Maintenance',
+  '/land': 'Land Overview',
+  '/land-parcels': 'Land Parcels',
+  '/land-surveys': 'Land Surveys',
+  '/land-ownership': 'Land Ownership',
+  '/land-acquisitions': 'Land Acquisitions',
+  '/land-sales': 'Land Sales',
+  '/land-transfers': 'Ownership Transfers',
+  '/land-transactions': 'Land Transactions',
   '/users': 'Employees',
   '/roles': 'Roles & Permissions',
   '/login-history': 'Login History',
@@ -271,6 +288,26 @@ export default function DashboardLayout() {
                     >
                       <ShieldPlus className="h-4 w-4 text-pcc-600" strokeWidth={1.8} />
                       New Role
+                    </button>
+                  )}
+                  {hasPermission('LAND_CREATE') && (
+                    <button
+                      role="menuitem"
+                      onClick={() => { setAddOpen(false); navigate('/land-parcels?new=1') }}
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-pcc-50 hover:text-pcc-700"
+                    >
+                      <Map className="h-4 w-4 text-pcc-600" strokeWidth={1.8} />
+                      Register Land
+                    </button>
+                  )}
+                  {hasPermission('LAND_SALE_REQUEST') && (
+                    <button
+                      role="menuitem"
+                      onClick={() => { setAddOpen(false); navigate('/land-sales?new=1') }}
+                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-pcc-50 hover:text-pcc-700"
+                    >
+                      <HandCoins className="h-4 w-4 text-pcc-600" strokeWidth={1.8} />
+                      New Sale Request
                     </button>
                   )}
                 </div>

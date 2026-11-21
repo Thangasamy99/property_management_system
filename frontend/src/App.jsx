@@ -16,6 +16,14 @@ import ApartmentsPage from './pages/property/ApartmentsPage.jsx'
 import TenantsPage from './pages/property/TenantsPage.jsx'
 import RentalsPage from './pages/property/RentalsPage.jsx'
 import MaintenancePage from './pages/property/MaintenancePage.jsx'
+import LandDashboardPage from './pages/land/LandDashboardPage.jsx'
+import LandParcelsPage from './pages/land/LandParcelsPage.jsx'
+import LandSurveysPage from './pages/land/LandSurveysPage.jsx'
+import OwnershipPage from './pages/land/OwnershipPage.jsx'
+import AcquisitionsPage from './pages/land/AcquisitionsPage.jsx'
+import LandSalesPage from './pages/land/LandSalesPage.jsx'
+import TransfersPage from './pages/land/TransfersPage.jsx'
+import TransactionsPage from './pages/land/TransactionsPage.jsx'
 
 function RootRedirect() {
   const { user, ready } = useAuth()
@@ -75,6 +83,17 @@ export default function App() {
               </Route>
               <Route element={<ProtectedRoute permission="MAINTENANCE_VIEW" />}>
                 <Route path="/maintenance" element={<MaintenancePage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute permission="LAND_VIEW" />}>
+                <Route path="/land" element={<LandDashboardPage />} />
+                <Route path="/land-parcels" element={<LandParcelsPage />} />
+                <Route path="/land-surveys" element={<LandSurveysPage />} />
+                <Route path="/land-ownership" element={<OwnershipPage />} />
+                <Route path="/land-acquisitions" element={<AcquisitionsPage />} />
+                <Route path="/land-sales" element={<LandSalesPage />} />
+                <Route path="/land-transfers" element={<TransfersPage />} />
+                <Route path="/land-transactions" element={<TransactionsPage />} />
               </Route>
             </Route>
           </Route>
