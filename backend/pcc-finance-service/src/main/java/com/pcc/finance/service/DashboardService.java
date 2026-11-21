@@ -81,7 +81,6 @@ public class DashboardService {
     }
 
     private BigDecimal netPaid(Long targetId) {
-        return allocationRepository.sumPostedForTarget(targetId)
-                .subtract(allocationRepository.sumRefundedForTarget(targetId));
+        return allocationRepository.sumPostedNetForTarget(targetId);
     }
 }

@@ -25,8 +25,16 @@ public class PaymentAllocation {
     @JoinColumn(name = "target_id")
     private PaymentTarget target;
 
+    /** Stable reference used as the idempotency key on downstream sync calls. */
+    @Column(nullable = false, length = 60)
+    private String allocationRef;
+
     @Column(nullable = false, precision = 18)
     private BigDecimal amount;
+
+    /** Portion of this allocation reversed by refunds/payment reversals. */
+    @Column(nullable = false, precision = 18)
+    private BigDecimal reversedAmount = BigDecimal.ZERO;
 
     private String note;
 

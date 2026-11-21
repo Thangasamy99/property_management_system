@@ -64,6 +64,7 @@ class FinanceServiceIntegrationTest {
 
     @BeforeEach
     void stubGateway() throws Exception {
+        lenient().when(gateway.hasRelayToken()).thenReturn(true);
         // Property Service: agreement 5 with schedule 10 (100,000 XAF)
         lenient().when(gateway.propertyGet("/api/v1/rental-agreements/5/schedules"))
                 .thenReturn(Optional.of(json(

@@ -64,7 +64,7 @@ export default function FinanceReportsPage() {
   if (r && report === 'collections') {
     summary = <div className="mb-4 grid gap-3 sm:grid-cols-3">
       <SummaryCard k="Total collected" v={fmtXaf(r.total)} /><SummaryCard k="Transactions" v={r.count} />
-      <SummaryCard k="Top method" v={Object.entries(r.byMethod ?? {}).sort((a, b) => b[1] - a[1])[0]?.map(([k]) => label(k))[0] ?? '—'} />
+      <SummaryCard k="Top method" v={(() => { const t = Object.entries(r.byMethod ?? {}).sort((a, b) => b[1] - a[1])[0]; return t ? label(t[0]) : '—' })()} />
     </div>
     csvCols = [{ label: 'Ref', render: (p) => p.paymentRef }, { label: 'Type', render: (p) => label(p.paymentType) }, { label: 'Payer', render: (p) => p.payerName }, { label: 'Amount', render: (p) => fmtXaf(p.amount), csv: (p) => p.amount }, { label: 'Date', render: (p) => fmtDate(p.paymentDate) }, { label: 'Method', render: (p) => label(p.methodCode) }, { label: 'Status', render: (p) => <StatusBadge value={p.status} />, csv: (p) => p.status }]
     table = <Table cols={csvCols} rows={r.payments} />; csvRows = r.payments

@@ -36,6 +36,7 @@ public class PaymentService {
     private final TargetVerifier verifier;
     private final PostingService posting;
     private final FinanceSupport support;
+    private final SyncService sync;
 
     // ---------- creation ----------
 
@@ -85,12 +86,13 @@ public class PaymentService {
         PaymentAllocation alloc = new PaymentAllocation();
         alloc.setPayment(p);
         alloc.setTarget(target);
+        alloc.setAllocationRef(p.getPaymentRef() + "-A1");
         alloc.setAmount(req.amount());
         alloc.setNote(verified.description());
         allocationRepository.save(alloc);
 
         if (p.getStatus() == PaymentStatus.POSTED) {
-            postEffects(p, target);
+            postEffects(p, alloc);
         }
         support.audit("PAYMENT", p.getId(), "CREATED",
                 type + " " + p.getAmount().toPlainString() + " XAF -> " + target.getExternalReference());
@@ -122,7 +124,7 @@ public class PaymentService {
 
         markPosted(p);
         paymentRepository.save(p);
-        for (PaymentAllocation a : allocs) postEffects(p, a.getTarget());
+        for (PaymentAllocation a : allocs) postEffects(p, a);
         support.audit("PAYMENT", p.getId(), "POSTED", p.getPaymentRef());
         return response(p);
     }
@@ -134,20 +136,15 @@ public class PaymentService {
         p.setPostedAt(Instant.now());
     }
 
-    /** Ledger CREDIT + receipt + downstream status sync for a posted payment. */
-    private void postEffects(Payment p, PaymentTarget target) {
+    /** Ledger CREDIT + receipt + enqueue downstream allocation sync for a posted payment. */
+    private void postEffects(Payment p, PaymentAllocation alloc) {
+        PaymentTarget target = alloc.getTarget();
         String related = target.getExternalReference()
                 + (target.getParentReference() != null ? " / " + target.getParentReference() : "");
         posting.credit(p, LedgerTxType.RECEIPT, related,
                 p.getPaymentType() + " payment");
         posting.issueReceipt(p, related);
-
-        BigDecimal net = postedNetFor(target.getId());
-        switch (target.getTargetType()) {
-            case RENT_SCHEDULE -> verifier.syncRentSchedule(target.getExternalId(), net);
-            case LAND_ACQUISITION -> verifier.syncLandAcquisition(target.getExternalId(), net);
-            case LAND_SALE -> verifier.syncLandSale(target.getExternalId(), net);
-        }
+        sync.enqueuePayment(target, p.getPaymentRef(), alloc);
     }
 
     // ---------- verification helpers ----------
@@ -192,11 +189,9 @@ public class PaymentService {
         return allocationRepository.sumCommittedForTarget(targetId);
     }
 
-    /** Net received (posted, less refunds) — used for outstanding + downstream sync. */
+    /** Net received (posted allocations minus recorded reversals) — used for outstanding. */
     private BigDecimal postedNetFor(Long targetId) {
-        BigDecimal posted = allocationRepository.sumPostedForTarget(targetId);
-        BigDecimal refunded = allocationRepository.sumRefundedForTarget(targetId);
-        return posted.subtract(refunded);
+        return allocationRepository.sumPostedNetForTarget(targetId);
     }
 
     // ---------- reads ----------

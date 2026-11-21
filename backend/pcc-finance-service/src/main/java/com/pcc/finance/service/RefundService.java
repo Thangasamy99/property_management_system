@@ -5,11 +5,13 @@ import com.pcc.finance.dto.response.PageResponse;
 import com.pcc.finance.dto.response.RefundResponse;
 import com.pcc.finance.entity.LedgerEntry;
 import com.pcc.finance.entity.Payment;
+import com.pcc.finance.entity.PaymentAllocation;
 import com.pcc.finance.entity.Refund;
 import com.pcc.finance.enums.*;
 import com.pcc.finance.exception.BusinessRuleException;
 import com.pcc.finance.exception.ResourceNotFoundException;
 import com.pcc.finance.repository.LedgerEntryRepository;
+import com.pcc.finance.repository.PaymentAllocationRepository;
 import com.pcc.finance.repository.PaymentRepository;
 import com.pcc.finance.repository.ReceiptRepository;
 import com.pcc.finance.repository.RefundRepository;
@@ -28,10 +30,12 @@ public class RefundService {
 
     private final RefundRepository refundRepository;
     private final PaymentRepository paymentRepository;
+    private final PaymentAllocationRepository allocationRepository;
     private final ReceiptRepository receiptRepository;
     private final LedgerEntryRepository ledgerRepository;
     private final PostingService posting;
     private final FinanceSupport support;
+    private final SyncService sync;
 
     // ---------- refunds ----------
 
@@ -72,6 +76,8 @@ public class RefundService {
         p.setStatus(p.getRefundedAmount().compareTo(p.getAmount()) == 0
                 ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED);
         paymentRepository.save(p);
+
+        distributeReversal(p, r.getAmount(), r.getRefundRef(), r.getReason());
 
         posting.debit(p, LedgerTxType.REFUND, r.getAmount(), r.getRefundRef(),
                 "Refund of " + p.getPaymentRef() + ": " + r.getReason());
@@ -117,6 +123,20 @@ public class RefundService {
 
         p.setStatus(PaymentStatus.REVERSED);
         paymentRepository.save(p);
+
+        List<PaymentAllocation> allocs = allocationRepository.findByPaymentId(p.getId());
+        int seq = 0;
+        for (PaymentAllocation a : allocs) {
+            seq++;
+            BigDecimal portion = a.getAmount().subtract(a.getReversedAmount());
+            if (portion.signum() <= 0) continue;
+            a.setReversedAmount(a.getAmount());
+            allocationRepository.save(a);
+            sync.enqueueReversal(a.getTarget(), p.getPaymentRef(), a,
+                    "REV-" + p.getPaymentRef() + "-" + seq, portion,
+                    java.time.LocalDate.now(), reason, support.actorName());
+        }
+
         receiptRepository.findByPaymentId(p.getId()).ifPresent(r -> {
             r.setVoided(true);
             receiptRepository.save(r);
@@ -135,6 +155,32 @@ public class RefundService {
     @Transactional(readOnly = true)
     public RefundResponse get(Long id) {
         return RefundResponse.of(refund(id));
+    }
+
+    /**
+     * Distributes a refund across the payment's allocations (FIFO, in id order),
+     * records the reversed portion per allocation and enqueues a downstream
+     * reversal sync per affected allocation — all inside this transaction.
+     */
+    private void distributeReversal(Payment p, BigDecimal amount, String refundRef, String reason) {
+        BigDecimal remaining = amount;
+        int seq = 0;
+        for (PaymentAllocation a : allocationRepository.findByPaymentId(p.getId())) {
+            if (remaining.signum() <= 0) break;
+            seq++;
+            BigDecimal refundable = a.getAmount().subtract(a.getReversedAmount());
+            BigDecimal portion = refundable.min(remaining);
+            if (portion.signum() <= 0) continue;
+            a.setReversedAmount(a.getReversedAmount().add(portion));
+            allocationRepository.save(a);
+            sync.enqueueReversal(a.getTarget(), p.getPaymentRef(), a,
+                    refundRef + "-" + seq, portion,
+                    java.time.LocalDate.now(), reason, support.actorName());
+            remaining = remaining.subtract(portion);
+        }
+        if (remaining.signum() > 0) {
+            throw new BusinessRuleException("Refund exceeds recorded allocation balances");
+        }
     }
 
     private Payment payment(Long id) {

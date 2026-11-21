@@ -75,6 +75,66 @@ public class ServiceGateway {
         }
     }
 
+    /**
+     * Result of a downstream sync POST. {@code permanent} marks validation
+     * rejections (4xx) that must not be retried automatically.
+     */
+    public record SyncCallResult(boolean success, boolean permanent, String error) {
+        static SyncCallResult ok() { return new SyncCallResult(true, false, null); }
+        static SyncCallResult permanent(String error) { return new SyncCallResult(false, true, error); }
+        static SyncCallResult transientError(String error) { return new SyncCallResult(false, false, error); }
+    }
+
+    /** Idempotent sync POST to Property Service; result captured, never thrown. */
+    public SyncCallResult propertyPost(String path, Map<String, Object> body) {
+        return post(propertyUrl, path, body, "Property Service");
+    }
+
+    /** Idempotent sync POST to Land Service; result captured, never thrown. */
+    public SyncCallResult landPost(String path, Map<String, Object> body) {
+        return post(landUrl, path, body, "Land Service");
+    }
+
+    private SyncCallResult post(String baseUrl, String path, Map<String, Object> body, String serviceName) {
+        if (!hasAuthorizationContext()) {
+            // No user request context (startup/scheduled dispatch). The call
+            // would 401 downstream — retryable once a user request drives it.
+            return SyncCallResult.transientError("No JWT available to relay (offline dispatch)");
+        }
+        try {
+            restClient.post()
+                    .uri(baseUrl + path)
+                    .headers(this::relayAuthorization)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+            return SyncCallResult.ok();
+        } catch (org.springframework.web.client.RestClientResponseException e) {
+            int code = e.getStatusCode().value();
+            String message = serviceName + " rejected sync: HTTP " + code + extractDetail(e);
+            log.warn("Sync POST {}{} failed permanently: {}", baseUrl, path, message);
+            return code >= 400 && code < 500 && code != 408 && code != 429
+                    ? SyncCallResult.permanent(message)
+                    : SyncCallResult.transientError(message);
+        } catch (Exception e) {
+            String message = serviceName + " unavailable: " + e.getMessage();
+            log.warn("Sync POST {}{} failed (transient): {}", baseUrl, path, message);
+            return SyncCallResult.transientError(message);
+        }
+    }
+
+    private static String extractDetail(org.springframework.web.client.RestClientResponseException e) {
+        try {
+            com.fasterxml.jackson.databind.JsonNode node =
+                    new com.fasterxml.jackson.databind.ObjectMapper()
+                            .readTree(e.getResponseBodyAsString());
+            String msg = node.path("message").asText(null);
+            return msg == null ? "" : " — " + msg;
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
     private void patchQuietly(String baseUrl, String path, Map<String, Object> body, String serviceName) {
         try {
             restClient.patch()
@@ -93,6 +153,16 @@ public class ServiceGateway {
             String auth = attrs.getRequest().getHeader("Authorization");
             if (auth != null) headers.set("Authorization", auth);
         }
+    }
+
+    /** True when a user request JWT is available to relay downstream. */
+    public boolean hasRelayToken() {
+        return hasAuthorizationContext();
+    }
+
+    private boolean hasAuthorizationContext() {
+        return RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs
+                && attrs.getRequest().getHeader("Authorization") != null;
     }
 
     private static final class NotFoundSignal extends RuntimeException {}

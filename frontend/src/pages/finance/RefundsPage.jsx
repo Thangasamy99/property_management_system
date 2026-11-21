@@ -8,12 +8,13 @@ import DataTable from '../../components/DataTable'
 import RowActionsMenu from '../../components/RowActionsMenu'
 import { inputCls } from '../property/PropertiesPage'
 import { StatusBadge, Field, fmtXaf, fmtDate, label } from './financeShared'
-import { Plus } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
 
 export default function RefundsPage() {
   const { hasPermission } = useAuth()
   const toast = useToast()
   const [data, setData] = useState(null)
+  const [syncs, setSyncs] = useState([])
   const [page, setPage] = useState(0)
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ paymentRef: '', amount: '', reason: '' })
@@ -27,6 +28,8 @@ export default function RefundsPage() {
   const load = useCallback(async () => {
     const res = await financeFetch(`/refunds?page=${page}&size=10`)
     if (res.ok) setData(await res.json())
+    const sres = await financeFetch('/sync-records')
+    if (sres.ok) setSyncs(await sres.json())
   }, [page]) // eslint-disable-line
   useEffect(() => { load() }, [load])
   useEffect(() => {
@@ -59,6 +62,14 @@ export default function RefundsPage() {
     toast(`Refund ${action}d`, 'success'); load()
   }
 
+  const retrySync = async (s) => {
+    const res = await financeFetch(`/sync-records/${s.id}/retry`, { method: 'POST', body: '{}' })
+    if (!res.ok) { toast((await res.json().catch(() => ({}))).message ?? 'Retry failed', 'error'); return }
+    const d = await res.json()
+    toast(d.status === 'SUCCESS' ? 'Synchronization confirmed' : `Sync still ${d.status.toLowerCase()}: ${d.lastError ?? ''}`, d.status === 'SUCCESS' ? 'success' : 'error')
+    load()
+  }
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -70,7 +81,7 @@ export default function RefundsPage() {
         )}
       </div>
       <DataTable
-        columns={[{ label: 'Refund Ref' }, { label: 'Payment Ref' }, { label: 'Payer' }, { label: 'Amount' }, { label: 'Reason' }, { label: 'Requested' }, { label: 'Status' }, { label: '' }]}
+        columns={[{ label: 'Refund Ref' }, { label: 'Payment Ref' }, { label: 'Payer' }, { label: 'Amount' }, { label: 'Reason' }, { label: 'Requested' }, { label: 'Status' }, { label: 'Downstream sync' }, { label: '' }]}
         rows={data?.content} loading={!data}
         page={page} totalPages={data?.totalPages ?? 0} onPage={setPage}
         empty="No refunds recorded">
@@ -83,6 +94,7 @@ export default function RefundsPage() {
             <td className="px-5 py-3.5 max-w-48 truncate text-slate-500">{r.reason}</td>
             <td className="px-5 py-3.5 text-slate-500">{fmtDate(r.requestedAt)}</td>
             <td className="px-5 py-3.5"><StatusBadge value={r.status} /></td>
+            <td className="px-5 py-3.5"><SyncCell refund={r} syncs={syncs} canApprove={canApprove} onRetry={retrySync} /></td>
             <td className="px-5 py-3.5 text-right">
               {r.status === 'REQUESTED' && canApprove && (
                 <RowActionsMenu items={[
@@ -104,6 +116,29 @@ export default function RefundsPage() {
           <button disabled={busy} className="h-11 w-full rounded-xl bg-pcc-700 text-sm font-semibold text-white hover:bg-pcc-900 disabled:opacity-60">{busy ? 'Submitting…' : 'Submit refund'}</button>
         </form>
       </Modal>
+    </div>
+  )
+}
+
+/** Downstream Property/Land reversal-sync state for a posted refund. */
+function SyncCell({ refund, syncs, canApprove, onRetry }) {
+  if (refund.status !== 'POSTED') return <span className="text-xs text-slate-300">—</span>
+  const rows = syncs.filter((s) => s.syncRef.startsWith(refund.refundRef + '-'))
+  if (rows.length === 0) return <span className="text-xs text-slate-300">—</span>
+  return (
+    <div className="space-y-1">
+      {rows.map((s) => (
+        <div key={s.id} className="flex items-center gap-1.5" title={s.lastError ?? s.syncRef}>
+          <StatusBadge value={s.status === 'FAILED' && s.permanent ? 'REJECTED' : s.status} />
+          <span className="text-[11px] text-slate-400">{s.externalService === 'PROPERTY' ? 'Property' : 'Land'}</span>
+          {s.status !== 'SUCCESS' && canApprove && (
+            <button onClick={() => onRetry(s)} title={`Retry ${s.syncRef}${s.lastError ? ' — ' + s.lastError : ''}`}
+                    className="rounded p-0.5 text-pcc-600 hover:bg-pcc-50">
+              <RefreshCw size={12} />
+            </button>
+          )}
+        </div>
+      ))}
     </div>
   )
 }

@@ -14,18 +14,23 @@ public interface PaymentAllocationRepository extends JpaRepository<PaymentAlloca
 
     List<PaymentAllocation> findByPaymentId(Long paymentId);
 
+    /** All allocations on posted payments — used for downstream sync reconciliation. */
+    @Query("SELECT a FROM PaymentAllocation a JOIN FETCH a.target JOIN FETCH a.payment " +
+            "WHERE a.payment.status IN ('POSTED','PARTIALLY_REFUNDED','REFUNDED','REVERSED')")
+    List<PaymentAllocation> findPostedAllocations();
+
     /** Committed = recorded or received money still occupying the target balance. */
-    @Query("SELECT COALESCE(SUM(a.amount),0) FROM PaymentAllocation a " +
+    @Query("SELECT COALESCE(SUM(a.amount - a.reversedAmount),0) FROM PaymentAllocation a " +
             "WHERE a.target.id = :targetId AND a.payment.status IN ('RECORDED','POSTED','PARTIALLY_REFUNDED','REFUNDED')")
     BigDecimal sumCommittedForTarget(@Param("targetId") Long targetId);
 
-    /** Posted = money actually received against the target. */
+    /** Posted = money actually received against the target (gross, before reversals). */
     @Query("SELECT COALESCE(SUM(a.amount),0) FROM PaymentAllocation a " +
             "WHERE a.target.id = :targetId AND a.payment.status IN ('POSTED','PARTIALLY_REFUNDED','REFUNDED')")
     BigDecimal sumPostedForTarget(@Param("targetId") Long targetId);
 
-    /** Refunded money tied to this target's payments (1:1 allocation assumption). */
-    @Query("SELECT COALESCE(SUM(p.refundedAmount),0) FROM Payment p " +
-            "WHERE EXISTS (SELECT 1 FROM PaymentAllocation a WHERE a.payment = p AND a.target.id = :targetId)")
-    BigDecimal sumRefundedForTarget(@Param("targetId") Long targetId);
+    /** Net posted = posted allocations minus recorded reversals (allocation-level). */
+    @Query("SELECT COALESCE(SUM(a.amount - a.reversedAmount),0) FROM PaymentAllocation a " +
+            "WHERE a.target.id = :targetId AND a.payment.status IN ('POSTED','PARTIALLY_REFUNDED','REFUNDED')")
+    BigDecimal sumPostedNetForTarget(@Param("targetId") Long targetId);
 }

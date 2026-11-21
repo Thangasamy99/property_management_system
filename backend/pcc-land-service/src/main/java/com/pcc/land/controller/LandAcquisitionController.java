@@ -6,6 +6,7 @@ import com.pcc.land.dto.response.AcquisitionResponse;
 import com.pcc.land.dto.response.PageResponse;
 import com.pcc.land.enums.AcquisitionStatus;
 import com.pcc.land.service.LandAcquisitionService;
+import com.pcc.land.service.LandFinanceSyncService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class LandAcquisitionController {
 
     private final LandAcquisitionService acquisitionService;
+    private final LandFinanceSyncService financeSync;
 
     @GetMapping
     @PreAuthorize("hasAuthority('LAND_VIEW')")
@@ -64,6 +66,20 @@ public class LandAcquisitionController {
     public AcquisitionResponse financeStatus(@PathVariable Long id,
                                              @Valid @RequestBody com.pcc.land.dto.request.FinanceStatusRequest req) {
         return acquisitionService.updateFinanceStatus(id, req.paidAmount());
+    }
+
+    @PostMapping("/{id}/finance-payments")
+    @PreAuthorize("hasAuthority('LAND_PAYMENT_SYNC')")
+    public AcquisitionResponse financePayment(@PathVariable Long id,
+                                              @Valid @RequestBody com.pcc.land.dto.request.FinanceAllocationRequest req) {
+        return financeSync.recordAcquisitionPayment(id, req);
+    }
+
+    @PostMapping("/{id}/payment-reversals")
+    @PreAuthorize("hasAuthority('LAND_PAYMENT_SYNC')")
+    public AcquisitionResponse financeReversal(@PathVariable Long id,
+                                               @Valid @RequestBody com.pcc.land.dto.request.FinanceReversalRequest req) {
+        return financeSync.reverseAcquisitionPayment(id, req);
     }
 
     @PostMapping("/{id}/cancel")
