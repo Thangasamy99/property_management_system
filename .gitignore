@@ -27,3 +27,13 @@ Thumbs.db
 # Misc
 *.zip
 document-storage
+
+# Secrets & local credentials — never commit
+password.txt
+*.env
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key

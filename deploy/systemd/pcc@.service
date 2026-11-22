@@ -1,0 +1,28 @@
+# Template unit — instance name is the service short name:
+#   systemctl enable --now pcc@identity   (8081)
+#   systemctl enable --now pcc@property   (8082) ... pcc@reporting (8087) pcc@gateway (8080)
+[Unit]
+Description=PCC %i service
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pcc
+Group=pcc
+EnvironmentFile=/etc/pcc/pcc.env
+WorkingDirectory=/opt/pcc
+# %i expands to identity|property|land|finance|document|workflow|reporting|gateway
+ExecStart=/usr/bin/java -Xms256m -Xmx512m -jar /opt/pcc/pcc-%i.jar
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=10
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/pcc /var/log/pcc
+
+[Install]
+WantedBy=multi-user.target

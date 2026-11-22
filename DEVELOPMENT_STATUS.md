@@ -224,3 +224,33 @@ Independent aggregator: relays the caller JWT to owning services over HTTP; neve
 **Limitations**: employee/audit reports depend on what Identity exposes (audit-logs endpoint only — login trends limited); page-size cap 1000 rows; cache applies to dashboards not individual report runs; PDF covers full row set w/ truncation notice.
 
 Run: `SERVER_PORT=8087 DB_URL=... DB_PASSWORD=... JWT_SECRET=... java -jar pcc-reporting-service.jar` (all six service URLs configurable via `pcc.reporting.*-url`).
+
+---
+
+## Phase 8 — API Gateway & Production Readiness
+
+**`pcc-api-gateway`** (:8080) — Spring Cloud Gateway (Boot 4.1.2, SC 2025.1.0 w/ compatibility-verifier disabled; SC renamed config namespace to `spring.cloud.gateway.server.webflux.*`).
+
+- Routes: `/api/{identity,property,land,finance,documents,workflows,reporting}/**` → `StripPrefix=2` → owning service. Env-configurable upstreams.
+- `JwtValidationFilter` (global, order -100): validates HS512 signature + issuer + audience + exp + `type=access`; public paths = identity login/refresh + `/actuator`. Authorization header forwarded untouched — downstream permission checks still apply.
+- `RewriteResponseHeader` rescopes the refresh cookie `Path=/api/v1/auth` → `/api/identity/api/v1/auth` so HttpOnly refresh works through the prefix.
+- CORS (env-configurable origin, credentials allowed, Content-Disposition exposed for downloads), 30MB upload cap, 5s connect/60s response timeouts, JSON 401 errors, `/actuator/health`.
+
+**Frontend**: single entry point — `VITE_GATEWAY_URL` (default `http://localhost:8080/api`); `VITE_DIRECT_SERVICES=1` or per-service `VITE_*_API_URL` bypass for troubleshooting. Auth + refresh + uploads + exports all preserved.
+
+**Gateway E2E (live)**: login+refresh via gateway 200; all 7 route prefixes 200; unauth 401; po1 finance 403/property 200; POST property 201; multipart upload → DOC-000004; PDF export valid; workflow definitions 200; audit-logs 200; unknown path 404.
+
+**Security review**: `password.txt` (contained dev admin/officer credentials) removed from tracking + gitignore'd (`*.env`, `*.pem`, `*.key`, `secrets/`); still present in history → **all dev passwords + JWT_SECRET + DB creds must be rotated before go-live**. Remaining known risks documented in deploy/DEPLOYMENT.md §9.
+
+**Deployment** (`deploy/`): production env template, `pcc@.service` systemd template (hardened: NoNewPrivileges, ProtectSystem), Nginx SPA+TLS config, backup/restore scripts (7 DBs + document store, 14-day retention), full runbook in `deploy/DEPLOYMENT.md`. Loopback-only MySQL + services; only Nginx public.
+
+## Final release checklist
+
+- [x] 7 backend services + gateway running
+- [x] Frontend → gateway (build clean)
+- [x] Auth/refresh/authorization correct through gateway
+- [x] Upload/download + exports through gateway
+- [x] Reporting live-aggregates real data w/ source health
+- [ ] Regression suites on all services post-gateway (unchanged code; suites verified per-phase)
+- [ ] Production secrets rotated (see §9)
+- [ ] VPS deployment executed (pending review)
