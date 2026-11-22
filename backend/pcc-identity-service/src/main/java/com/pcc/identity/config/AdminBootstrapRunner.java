@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,7 @@ import java.util.Set;
  *
  * Runs only when no user holds the ADMIN role. Credentials come from
  * PCC_ADMIN_* environment variables; when PCC_ADMIN_PASSWORD is not provided a
- * random password is generated and printed ONCE to the startup log.
+ * random password is generated. Passwords are never written to application logs.
  * The account is created with mustChangePassword=true so the password must be
  * rotated at first login. Because creation is guarded by the ADMIN-exists
  * check, the bootstrap can never recreate or overwrite an admin account.
@@ -37,6 +38,7 @@ public class AdminBootstrapRunner implements ApplicationRunner {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityProperties properties;
+    private final Environment environment;
 
     @Override
     @Transactional
@@ -56,6 +58,12 @@ public class AdminBootstrapRunner implements ApplicationRunner {
 
         String password = bootstrap.getAdminPassword();
         boolean generated = password == null || password.isBlank();
+        boolean production = java.util.Arrays.stream(environment.getActiveProfiles())
+                .anyMatch("prod"::equalsIgnoreCase);
+        if (generated && production) {
+            throw new IllegalStateException(
+                    "PCC_ADMIN_PASSWORD must be supplied for the initial production admin.");
+        }
         if (generated) {
             password = PasswordGenerator.temporaryPassword();
         }
@@ -76,11 +84,10 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         log.warn("=".repeat(72));
         log.warn(" INITIAL ADMIN ACCOUNT CREATED");
         log.warn("   username : {}", admin.getUsername());
-        log.warn("   password : {}", generated ? password : "(from PCC_ADMIN_PASSWORD env var)");
+        log.warn("   password : {}", generated
+                ? "(generated; not logged — set PCC_ADMIN_PASSWORD to control bootstrap)"
+                : "(from PCC_ADMIN_PASSWORD env var)");
         log.warn("   NOTE     : password change is FORCED on first login.");
-        if (generated) {
-            log.warn("   Save this generated password now - it is shown only once.");
-        }
         log.warn("=".repeat(72));
     }
 }

@@ -74,7 +74,7 @@ public final class ReportRegistry {
           "LAND_REPORT_VIEW", List.of(Col.t("surveyReference","Reference"), Col.t("parcelReference","Parcel"),
           Col.t("surveyorName","Surveyor"), Col.d("surveyDate","Date"), Col.t("status","Status"))),
         // ---------- FINANCE ----------
-        d("payments-register", "Payment Register", "FINANCE", "FINANCE", "/api/v1/payments",
+        d("payments-register", "Rent Collection Register", "FINANCE", "FINANCE", "/api/v1/rent-collections/payments",
           "FINANCIAL_REPORT_VIEW", List.of(Col.t("paymentRef","Reference"), Col.m("amount","Amount"),
           Col.t("paymentMethod","Method"), Col.t("status","Status"), Col.d("paymentDate","Date"),
           Col.t("recordedByName","Recorded By"))),

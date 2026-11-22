@@ -170,8 +170,8 @@ class IdentityServiceIntegrationTest {
     @Order(13)
     void forbiddenWithoutRequiredPermission() throws Exception {
         String token = adminToken();
-        createUser(token, "officer1", "officer1@pcc.cm", "Officer!123", "PROPERTY_OFFICER");
-        String officerToken = login("officer1", "Officer!123");
+        createUser(token, "officer1", "officer1@pcc.cm", "IdentityTest_Officer#2026", "PROPERTY_OFFICER");
+        String officerToken = login("officer1", "IdentityTest_Officer#2026");
 
         mockMvc.perform(get("/api/v1/users")
                         .header("Authorization", "Bearer " + officerToken))
@@ -428,8 +428,8 @@ class IdentityServiceIntegrationTest {
     @Test
     @Order(53)
     void adminEndpointsForbiddenForOfficer() throws Exception {
-        createUser(adminToken(), "officer2", "officer2@test.pcc", "Officer!123", "PROPERTY_OFFICER");
-        String officerToken = login("officer2", "Officer!123");
+        createUser(adminToken(), "officer2", "officer2@test.pcc", "IdentityTest_Officer#2026", "PROPERTY_OFFICER");
+        String officerToken = login("officer2", "IdentityTest_Officer#2026");
 
         mockMvc.perform(get("/api/v1/stats/dashboard").header("Authorization", "Bearer " + officerToken))
                 .andExpect(status().isForbidden());

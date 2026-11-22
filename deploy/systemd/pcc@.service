@@ -11,6 +11,8 @@ Type=simple
 User=pcc
 Group=pcc
 EnvironmentFile=/etc/pcc/pcc.env
+# Per-instance DB credentials, DB_URL and service-only configuration.
+EnvironmentFile=/etc/pcc/%i.env
 WorkingDirectory=/opt/pcc
 # %i expands to identity|property|land|finance|document|workflow|reporting|gateway
 ExecStart=/usr/bin/java -Xms256m -Xmx512m -jar /opt/pcc/pcc-%i.jar

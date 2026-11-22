@@ -118,8 +118,13 @@ public class SourceGateway {
             String sep = path.contains("?") ? "&" : "?";
             var r = get(service, path + sep + "page=" + page + "&size=" + pageSize);
             if (!r.ok()) return r;
+            if (r.data().isArray() || (r.data().isObject()
+                    && !r.data().path("content").isArray())) {
+                // Finance summary/report endpoints may return a list or a
+                // summary DTO rather than a Spring Page. Preserve that shape.
+                return r;
+            }
             JsonNode content = r.data().path("content");
-            if (!content.isArray()) return SourceResult.down(service, "not a paged response");
             content.forEach(rows::add);
             if (page + 1 >= r.data().path("totalPages").asInt(1)) break;
             page++;

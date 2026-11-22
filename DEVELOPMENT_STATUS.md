@@ -251,6 +251,69 @@ Run: `SERVER_PORT=8087 DB_URL=... DB_PASSWORD=... JWT_SECRET=... java -jar pcc-r
 - [x] Auth/refresh/authorization correct through gateway
 - [x] Upload/download + exports through gateway
 - [x] Reporting live-aggregates real data w/ source health
-- [ ] Regression suites on all services post-gateway (unchanged code; suites verified per-phase)
+- [x] Regression suites on all services post-gateway (172/172; isolated test databases reset before rerun)
 - [ ] Production secrets rotated (see §9)
 - [ ] VPS deployment executed (pending review)
+
+## Phase 9 — Final Pre-Production Security Gate (2026-11-22)
+
+**Decision: NO-GO for production deployment.** This pass did not deploy to or modify production. Secret rotation, external Nginx validation, and a real encrypted backup/restore drill remain release blockers.
+
+### Repository and credentials
+
+- `password.txt` contained known development admin and PROPERTY_OFFICER credentials. It was removed from the tracked tree in `440ac14` and remains ignored by `.gitignore`; the local ignored file is still present and was not deleted.
+- Git history still contains `password.txt` and the former test fixture using the PROPERTY_OFFICER password (historical commits `467d3f7`, `3aa41ce`, and `440ac14`). Treat both credentials as compromised. A separate commit removed the test fixture from the current working tree. No remote history rewrite or force-push was performed.
+- The development DB credential and development JWT value were not found in tracked Git history/current tracked files. Local `.env` files remain ignored and contain development configuration; rotate those values before reuse outside this workstation.
+- The tracked tree no longer contains the exposed `password.txt` values. `.gitignore` covers local `.env`, secret/key files and credentials, while explicitly allowing the non-secret `deploy/.env.production.example`.
+- Identity bootstrap no longer writes generated passwords to logs; `prod` profile refuses initial bootstrap without `PCC_ADMIN_PASSWORD`. Local logs checked for an initial-admin bootstrap block; none was present.
+- The security review found Identity's forgot-password path logged raw reset tokens. That log was removed; current behavior logs only a generic delivery-not-configured warning. Local application logs contained neither an initial-admin bootstrap block nor the old raw-reset-token log signature. Self-service reset email is not configured; use the authorized admin reset flow until mail delivery is integrated.
+- Development `po1`, `lo1`, `acc1`, and `mgr1` accounts were reset through Identity; the generated temporary values were not printed or saved. Live logins and permissions were checked. The known development `admin` credential remains unchanged and is a blocker; it must be rotated before release.
+- Do not rewrite history without approval. Safe cleanup plan: rotate credentials first; freeze pushes; create an access-restricted mirror backup; use `git-filter-repo` to remove `password.txt` and replace the historical test fixture on every branch/tag; inspect the rewritten mirror and run secret scanning; coordinate a one-time force-push only after explicit approval; require all collaborators to re-clone and review forks/caches. History cleanup was not performed.
+
+### Production hardening
+
+- Added `application-prod.yml` for all seven services and Gateway. Production requires explicit DB URL/user/password, JWT secret/issuer/audience, CORS origin, service URLs and `SERVER_ADDRESS`; there are no production localhost fallbacks. Local profiles retain their dev defaults.
+- Production binds services to `127.0.0.1` via `SERVER_ADDRESS`; Gateway is behind Nginx. `deploy/.env.production.example` contains placeholders only. Each app receives a unique database account with privileges scoped to its schema; backup and restore accounts are separate.
+- Gateway allows only exact Identity login/refresh paths and `/actuator/health` without a JWT. `/actuator/gateway/**` now requires auth; route metadata is not public. Authorization is forwarded and downstream authorization remains enforced.
+- `deploy/nginx-pcc.conf` adds TLS 1.2/1.3, security headers, explicit Authorization forwarding, ACME webroot challenge handling, 30MB request limit, SPA fallback and Gateway-only proxy. Added HTTP bootstrap site to obtain the first certificate.
+- systemd uses a shared protected environment file plus a per-instance file, loopback binding, restricted writes, automatic restart. Added encrypted backup timer/service and isolated, non-overwriting restore script. Scripts pass `bash -n`.
+- Production profile YAML for all eight JVM applications parsed successfully. Local Nginx/systemd are unavailable on this Windows workstation, so their native config validators were not run. `age` and production backup/restore credentials are unavailable; the encrypted backup script and separate-schema restore drill were not executed. No production DB or document data was touched.
+
+### Regression results
+
+| Component | Tests | Failures / errors | Result |
+|---|---:|---:|---|
+| Identity | 60 | 0 / 0 | PASS |
+| Property | 23 | 0 / 0 | PASS |
+| Land | 16 | 0 / 0 | PASS |
+| Finance | 22 | 0 / 0 | PASS |
+| Document | 21 | 0 / 0 | PASS |
+| Workflow | 17 | 0 / 0 | PASS |
+| Reporting | 7 | 0 / 0 | PASS |
+| API Gateway | 6 | 0 / 0 | PASS |
+| Frontend production build | — | — | PASS |
+
+**Automated total: 172 tests, 0 failures, 0 errors.** Existing test databases had accumulated state; only isolated `*_test_db` schemas were dropped/recreated before successful regression reruns.
+
+### Gateway live verification
+
+- Login and refresh cookie through Gateway: 200/200. All seven service route prefixes returned successful responses; unauthenticated request 401.
+- Role checks with real Identity JWTs: ADMIN all tested domain dashboards 200; MANAGER property/finance 200; ACCOUNTANT finance 200/property 403; PROPERTY_OFFICER property 200/finance 403; LAND_OFFICER land 200/finance 403.
+- Property create returned 201. Agreement schedule, rent collection, refunds, Finance sync-record list, expenses, acquisition, sale, transfer, workflow history/definitions, documents and Reporting dashboard routes were exercised with 200 responses.
+- Existing local Finance data: 12/12 sync records SUCCESS; 4 refunds POSTED; expenses included APPROVED and PAID records. This confirms existing synchronized state is readable, but this gate did not create a new reversal or re-run the full refund/reversal workflow through Gateway.
+- Report-by-report probing found several Finance report definitions initially returned DOWN (a wrong payments path, required date filters, and non-Page DTO shapes). The registry/aggregation code was corrected and the Reporting suite passed again, but the updated service was not repackaged and live-retested; Finance report correctness remains a release blocker.
+- Document multipart upload succeeded for a test PDF; download returned 200, 47 bytes, and Content-Disposition; version history returned 200. Unsupported text upload returned 422 as expected.
+- CSV/XLSX/PDF export through Gateway returned 200, correct file signatures and Content-Disposition. CORS preflight echoed only the configured localhost development origin. Unknown entity returned 404.
+- A test property and test document were created in local development data; these were not production records. Ownership-transfer list was empty, so a full transfer lifecycle was not verified. Full workflow submission/approval, rent collection/refund/reversal, expense-payment, and ownership-transfer mutations were not repeated in this gate; prior phase tests/live checks remain the evidence for those service-owned flows.
+- Nginx itself is not installed locally, so multipart/download through Nginx and external firewall/TLS behavior remain unverified.
+
+### Release blockers
+
+1. Rotate JWT signing secret, DB credentials, and all employee credentials in the production secret manager. Revoke Identity refresh sessions and coordinate a full stop/start so old access JWTs are rejected. Reset/disable demo accounts; do not reuse the development `admin` credential.
+2. Decide and approve Git history cleanup; do not force-push until the repository owner approves.
+3. Rotate/disable the development `admin` account; the other four demo roles were reset for this gate. Self-service password-reset email is unavailable, so validate the administrator recovery path.
+4. Install the release configuration on a staging VPS, validate with `nginx -t` and systemd, run encrypted backup, then restore into separate empty `*_restore_test` schemas and isolated document storage.
+5. Run the remaining mutation-heavy Gateway scenarios in staging (refund/reversal reconciliation, expense approval+payment, ownership transfer) and verify the results against each owning service before production.
+6. Validate public firewall exposure and certificate renewal from an external host.
+
+**Deployment remains paused for final release/deployment review.**

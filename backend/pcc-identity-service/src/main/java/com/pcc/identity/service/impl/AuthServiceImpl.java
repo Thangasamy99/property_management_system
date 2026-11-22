@@ -198,10 +198,9 @@ public class AuthServiceImpl implements AuthService {
             token.setTokenHash(TokenHashUtil.sha256(raw));
             token.setExpiresAt(Instant.now().plus(properties.getPasswordResetTokenTtlMinutes(), ChronoUnit.MINUTES));
             passwordResetTokenRepository.save(token);
-            // Email delivery is a future integration (PCC mail service). Until then the
-            // reset token is written to the application log for administrative hand-off.
-            log.info("Password reset token issued for user '{}' (expires in {} min): {}",
-                    user.getUsername(), properties.getPasswordResetTokenTtlMinutes(), raw);
+            // Never expose the bearer token through logs. Until mail delivery exists,
+            // recovery must use the authenticated administrator reset flow.
+            log.warn("Self-service password reset requested but delivery is not configured.");
         });
         return new MessageResponse("If the account exists, password reset instructions have been sent.");
     }

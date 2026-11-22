@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -49,7 +51,7 @@ public class ReportService {
         ReportRegistry.Def def = ReportRegistry.find(key)
                 .orElseThrow(() -> new ResourceNotFoundException("Unknown report: " + key));
 
-        String path = withParams(def.path(), params);
+        String path = withParams(def.service(), def.path(), params);
         var src = def.paged()
                 ? gateway.getAllRows(def.service(), path, 100, MAX_ROWS)
                 : gateway.get(def.service(), path);
@@ -61,6 +63,7 @@ public class ReportService {
         if (src.ok() && src.data() != null) {
             JsonNode items = src.data().isArray() ? src.data()
                     : src.data().path("content").isArray() ? src.data().path("content")
+                    : src.data().path("targets").isArray() ? src.data().path("targets")
                     : src.data();
             if (items.isArray()) {
                 for (JsonNode n : items) rows.add(project(n, def.columns()));
@@ -82,10 +85,19 @@ public class ReportService {
                 truncated, sources, Instant.now());
     }
 
-    private String withParams(String path, Map<String, String> params) {
-        if (params == null) return path;
+    private String withParams(String service, String path, Map<String, String> params) {
+        Map<String, String> effective = params == null ? new HashMap<>() : new HashMap<>(params);
+        if ("FINANCE".equals(service)
+                && (path.contains("/reports/collections")
+                || path.contains("/reports/payment-method-summary")
+                || path.contains("/reports/expenses")
+                || path.contains("/reports/income-vs-expense"))) {
+            LocalDate today = LocalDate.now();
+            effective.putIfAbsent("from", today.minus(30, ChronoUnit.DAYS).toString());
+            effective.putIfAbsent("to", today.toString());
+        }
         StringBuilder sb = new StringBuilder(path);
-        params.forEach((k, v) -> {
+        effective.forEach((k, v) -> {
             if (v != null && !v.isBlank()) {
                 sb.append(sb.indexOf("?") >= 0 ? "&" : "?").append(k).append("=").append(v);
             }

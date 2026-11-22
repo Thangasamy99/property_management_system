@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Validates the shared PCC JWT (HS512, issuer/audience, exp) before proxying.
@@ -28,10 +28,9 @@ import java.util.List;
 @Component
 public class JwtValidationFilter implements GlobalFilter, Ordered {
 
-    private static final List<String> PUBLIC_PREFIXES = List.of(
+    private static final Set<String> PUBLIC_PATHS = Set.of(
             "/api/identity/api/v1/auth/login",
-            "/api/identity/api/v1/auth/refresh",
-            "/actuator");
+            "/api/identity/api/v1/auth/refresh");
 
     private final SecretKey key;
     private final String issuer;
@@ -58,7 +57,8 @@ public class JwtValidationFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
         if (exchange.getRequest().getMethod() == org.springframework.http.HttpMethod.OPTIONS
-                || PUBLIC_PREFIXES.stream().anyMatch(path::startsWith)) {
+                || PUBLIC_PATHS.contains(path)
+                || path.equals("/actuator/health")) {
             return chain.filter(exchange);
         }
 

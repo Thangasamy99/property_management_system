@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly encrypted PCC backup
+
+[Timer]
+OnCalendar=*-*-* 02:15:00
+RandomizedDelaySec=15m
+Persistent=true
+Unit=pcc-backup.service
+
+[Install]
+WantedBy=timers.target
