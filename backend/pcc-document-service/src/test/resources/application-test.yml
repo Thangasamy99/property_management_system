@@ -23,7 +23,7 @@ pcc:
       issuer: pcc-identity-service
       audience: pcc-property-management
     cors:
-      allowed-origins: http://localhost:5173
+      allowed-origins: http://localhost:3000
   storage:
     root: ${java.io.tmpdir}/pcc-doc-test-storage
     max-file-size: 4096

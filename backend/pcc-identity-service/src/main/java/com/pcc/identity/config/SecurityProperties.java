@@ -40,7 +40,7 @@ public class SecurityProperties {
     @Getter
     @Setter
     public static class Cors {
-        private List<String> allowedOrigins = List.of("http://localhost:5173");
+        private List<String> allowedOrigins = List.of("http://localhost:3000");
     }
 
     @Getter

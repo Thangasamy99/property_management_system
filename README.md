@@ -7,14 +7,14 @@ Enterprise internal platform for PCC Cameroon to manage properties, buildings, a
 ```
 frontend/                        React 19 + Vite + Tailwind CSS admin panel & login
 backend/pcc-identity-service/    Spring Boot 4.1 microservice — auth, users, roles,
-                                 permissions, audit logs (port 8081, MySQL)
+                                 permissions, audit logs (local port 9002, MySQL)
 ```
 
 ## Tech Stack
 
 - **Frontend**: React 19, Vite, Tailwind CSS v4, React Router, lucide-react
 - **Backend**: Java 21, Spring Boot, Spring Security (JWT + refresh rotation), Spring Data JPA, Flyway, MySQL 8, BCrypt
-- **Docs**: Swagger UI at `http://localhost:8081/swagger-ui.html`
+- **Docs**: Swagger UI at `http://localhost:9002/swagger-ui.html`
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ First startup creates `pcc_identity_db` tables via Flyway and bootstraps an admi
 ```bash
 cd frontend
 npm install
-npm run dev                     # http://localhost:5173
+npm run dev                     # http://localhost:3000
 ```
 
 ## Roles

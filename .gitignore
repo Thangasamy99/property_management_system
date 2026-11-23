@@ -35,6 +35,7 @@ password.txt
 .env.*
 !.env.example
 !deploy/.env.production.example
+.local/
 secrets/
 *.pem
 *.key

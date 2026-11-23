@@ -1,0 +1,43 @@
+server:
+  port: ${SERVER_PORT:9000}
+  address: ${SERVER_ADDRESS:127.0.0.1}
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: identity
+              uri: ${IDENTITY_SERVICE_URL:http://localhost:9002}
+              predicates: [Path=/api/identity/**]
+              filters:
+                - StripPrefix=2
+                - RewriteResponseHeader=Set-Cookie, Path=/api/v1/auth, Path=/api/identity/api/v1/auth
+            - id: property
+              uri: ${PROPERTY_SERVICE_URL:http://localhost:9001}
+              predicates: [Path=/api/property/**]
+              filters: [StripPrefix=2]
+            - id: land
+              uri: ${LAND_SERVICE_URL:http://localhost:9003}
+              predicates: [Path=/api/land/**]
+              filters: [StripPrefix=2]
+            - id: finance
+              uri: ${FINANCE_SERVICE_URL:http://localhost:9004}
+              predicates: [Path=/api/finance/**]
+              filters: [StripPrefix=2]
+            - id: documents
+              uri: ${DOCUMENT_SERVICE_URL:http://localhost:9005}
+              predicates: [Path=/api/documents/**]
+              filters: [StripPrefix=2]
+            - id: workflows
+              uri: ${WORKFLOW_SERVICE_URL:http://localhost:9006}
+              predicates: [Path=/api/workflows/**]
+              filters: [StripPrefix=2]
+            - id: reporting
+              uri: ${REPORTING_SERVICE_URL:http://localhost:9007}
+              predicates: [Path=/api/reporting/**]
+              filters: [StripPrefix=2]
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}

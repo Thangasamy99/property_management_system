@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8087}
+  port: ${SERVER_PORT:9007}
   address: ${SERVER_ADDRESS:0.0.0.0}
 
 spring:
@@ -33,14 +33,14 @@ pcc:
       issuer: ${JWT_ISSUER:pcc-identity-service}
       audience: ${JWT_AUDIENCE:pcc-property-management}
     cors:
-      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   reporting:
-    identity-url: ${IDENTITY_SERVICE_URL:http://localhost:8081}
-    property-url: ${PROPERTY_SERVICE_URL:http://localhost:8082}
-    land-url: ${LAND_SERVICE_URL:http://localhost:8083}
-    finance-url: ${FINANCE_SERVICE_URL:http://localhost:8084}
-    document-url: ${DOCUMENT_SERVICE_URL:http://localhost:8085}
-    workflow-url: ${WORKFLOW_SERVICE_URL:http://localhost:8086}
+    identity-url: ${IDENTITY_SERVICE_URL:http://localhost:9002}
+    property-url: ${PROPERTY_SERVICE_URL:http://localhost:9001}
+    land-url: ${LAND_SERVICE_URL:http://localhost:9003}
+    finance-url: ${FINANCE_SERVICE_URL:http://localhost:9004}
+    document-url: ${DOCUMENT_SERVICE_URL:http://localhost:9005}
+    workflow-url: ${WORKFLOW_SERVICE_URL:http://localhost:9006}
     connect-timeout-ms: ${REPORT_CONNECT_TIMEOUT_MS:3000}
     read-timeout-ms: ${REPORT_READ_TIMEOUT_MS:15000}
     cache-ttl-seconds: ${REPORT_CACHE_TTL_SECONDS:120}

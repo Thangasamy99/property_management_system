@@ -29,7 +29,7 @@ pcc:
       lock-duration-minutes: 15
     password-reset-token-ttl-minutes: 30
     cors:
-      allowed-origins: http://localhost:5173
+      allowed-origins: http://localhost:3000
     bootstrap:
       admin-username: admin
       admin-email: admin@test.local

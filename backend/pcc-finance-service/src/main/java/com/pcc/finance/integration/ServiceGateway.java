@@ -27,10 +27,10 @@ public class ServiceGateway {
     private final RestClient restClient = RestClient.create();
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${pcc.integration.property-service-url:http://localhost:8082}")
+    @Value("${pcc.integration.property-service-url:http://localhost:9001}")
     private String propertyUrl;
 
-    @Value("${pcc.integration.land-service-url:http://localhost:8083}")
+    @Value("${pcc.integration.land-service-url:http://localhost:9003}")
     private String landUrl;
 
     public Optional<JsonNode> propertyGet(String path) {

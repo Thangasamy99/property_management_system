@@ -317,3 +317,27 @@ Run: `SERVER_PORT=8087 DB_URL=... DB_PASSWORD=... JWT_SECRET=... java -jar pcc-r
 6. Validate public firewall exposure and certificate renewal from an external host.
 
 **Deployment remains paused for final release/deployment review.**
+
+## Local Development Port Standardization (2026-11-23)
+
+Local application defaults and local-only profiles now use Gateway `9000`, Property `9001`, Identity `9002`,
+Land `9003`, Finance `9004`, Document `9005`, Workflow `9006`, Reporting
+`9007`, and Vite `3000`. Application endpoint paths and DB names are unchanged;
+production `application-prod.yml` and `deploy/` ports were not changed.
+
+- Added per-service `application-local.yml`, environment-based downstream URL
+  overrides and localhost:3000 CORS. Property Management is explicitly 9001.
+- Frontend clients use `http://localhost:9000/api` by default; document file
+  preview/download now uses Gateway too. Direct-service troubleshooting remains
+  configurable.
+- Added `scripts/start-local.ps1`, `check-local.ps1`, `stop-local.ps1` and
+  `LOCAL_SETUP.md`. The scripts check occupied ports, start MySQL first,
+  refuse duplicate PCC processes, wait on health endpoints, save logs in
+  ignored `.local/`, and stop only recorded matching processes. MySQL is left
+  running; no databases are reset/deleted.
+- The default local profile also uses the new ports, while `local` retains
+  explicit bind-address and downstream defaults. Target ports were free during
+  this change, but the startup script correctly refused to run because the
+  ignored `.env.local` was not readable/absent here. Live 9000-9007/3000
+  runtime checks therefore remain an operator run with a valid local secret;
+  do not use production secrets.

@@ -26,7 +26,7 @@ pcc:
       issuer: pcc-identity-service
       audience: pcc-property-management
     cors:
-      allowed-origins: http://localhost:5173
+      allowed-origins: http://localhost:3000
   reporting:
     connect-timeout-ms: 800
     read-timeout-ms: 2000

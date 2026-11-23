@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8084}
+  port: ${SERVER_PORT:9004}
   address: ${SERVER_ADDRESS:0.0.0.0}
 
 spring:
@@ -31,8 +31,8 @@ springdoc:
 pcc:
   integration:
     # explicit service URLs for token-relay verification calls (dev defaults)
-    property-service-url: ${PROPERTY_SERVICE_URL:http://localhost:8082}
-    land-service-url: ${LAND_SERVICE_URL:http://localhost:8083}
+    property-service-url: ${PROPERTY_SERVICE_URL:http://localhost:9001}
+    land-service-url: ${LAND_SERVICE_URL:http://localhost:9003}
   security:
     jwt:
       # shared with pcc-identity-service: tokens are issued there and validated here
@@ -40,7 +40,7 @@ pcc:
       issuer: ${JWT_ISSUER:pcc-identity-service}
       audience: ${JWT_AUDIENCE:pcc-property-management}
     cors:
-      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
 
 logging:
   level:

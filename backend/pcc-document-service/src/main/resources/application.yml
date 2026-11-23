@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8085}
+  port: ${SERVER_PORT:9005}
   address: ${SERVER_ADDRESS:0.0.0.0}
 
 spring:
@@ -40,9 +40,9 @@ pcc:
     allowed-mime: ${DOC_ALLOWED_MIME:application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet}
   integration:
     # external entity validation targets (relayed JWT, no DB coupling)
-    property-service-url: ${PROPERTY_SERVICE_URL:http://localhost:8082}
-    land-service-url: ${LAND_SERVICE_URL:http://localhost:8083}
-    finance-service-url: ${FINANCE_SERVICE_URL:http://localhost:8084}
+    property-service-url: ${PROPERTY_SERVICE_URL:http://localhost:9001}
+    land-service-url: ${LAND_SERVICE_URL:http://localhost:9003}
+    finance-service-url: ${FINANCE_SERVICE_URL:http://localhost:9004}
   security:
     jwt:
       # shared with pcc-identity-service: tokens are issued there and validated here
@@ -50,7 +50,7 @@ pcc:
       issuer: ${JWT_ISSUER:pcc-identity-service}
       audience: ${JWT_AUDIENCE:pcc-property-management}
     cors:
-      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000}
 
 logging:
   level:

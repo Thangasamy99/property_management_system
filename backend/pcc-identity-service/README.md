@@ -9,7 +9,7 @@ Authentication & User Management microservice for the **PCC Cameroon — Propert
 | Port | `8081` |
 | Database | MySQL `pcc_identity_db` (tests: `pcc_identity_test_db`) |
 | API base path | `/api/v1` |
-| Swagger UI | http://localhost:8081/swagger-ui.html |
+| Swagger UI | http://localhost:9002/swagger-ui.html |
 
 ## Technology Stack
 

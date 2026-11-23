@@ -1,21 +1,21 @@
-// Default: everything goes through the API Gateway (:8080).
+// Default: everything goes through the API Gateway (:9000).
 // Set VITE_DIRECT_SERVICES=1 or per-service VITE_*_API_URL to bypass it.
-const GATEWAY = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:8080/api'
+const GATEWAY = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:9000/api'
 const direct = import.meta.env.VITE_DIRECT_SERVICES === '1'
 const API_BASE = import.meta.env.VITE_API_URL
-  ?? (direct ? 'http://localhost:8081/api/v1' : `${GATEWAY}/identity/api/v1`)
+  ?? (direct ? 'http://localhost:9002/api/v1' : `${GATEWAY}/identity/api/v1`)
 const PROPERTY_API_BASE = import.meta.env.VITE_PROPERTY_API_URL
-  ?? (direct ? 'http://localhost:8082/api/v1' : `${GATEWAY}/property/api/v1`)
+  ?? (direct ? 'http://localhost:9001/api/v1' : `${GATEWAY}/property/api/v1`)
 const LAND_API_BASE = import.meta.env.VITE_LAND_API_URL
-  ?? (direct ? 'http://localhost:8083/api/v1' : `${GATEWAY}/land/api/v1`)
+  ?? (direct ? 'http://localhost:9003/api/v1' : `${GATEWAY}/land/api/v1`)
 const FINANCE_API_BASE = import.meta.env.VITE_FINANCE_API_URL
-  ?? (direct ? 'http://localhost:8084/api/v1' : `${GATEWAY}/finance/api/v1`)
+  ?? (direct ? 'http://localhost:9004/api/v1' : `${GATEWAY}/finance/api/v1`)
 const DOCUMENT_API_BASE = import.meta.env.VITE_DOCUMENT_API_URL
-  ?? (direct ? 'http://localhost:8085/api/v1' : `${GATEWAY}/documents/api/v1`)
+  ?? (direct ? 'http://localhost:9005/api/v1' : `${GATEWAY}/documents/api/v1`)
 const WORKFLOW_API_BASE = import.meta.env.VITE_WORKFLOW_API_URL
-  ?? (direct ? 'http://localhost:8086/api/v1' : `${GATEWAY}/workflows/api/v1`)
+  ?? (direct ? 'http://localhost:9006/api/v1' : `${GATEWAY}/workflows/api/v1`)
 const REPORTING_API_BASE = import.meta.env.VITE_REPORTING_API_URL
-  ?? (direct ? 'http://localhost:8087/api/v1' : `${GATEWAY}/reporting/api/v1`)
+  ?? (direct ? 'http://localhost:9007/api/v1' : `${GATEWAY}/reporting/api/v1`)
 
 // Access token lives in memory only (never localStorage).
 // Session restore happens through the HttpOnly refresh cookie.

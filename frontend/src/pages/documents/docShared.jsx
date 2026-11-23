@@ -1,5 +1,11 @@
 import { docFetch, docUpload, tokenStore } from '../../services/api'
 
+const gateway = import.meta.env.VITE_GATEWAY_URL ?? 'http://localhost:9000/api'
+const documentApi = import.meta.env.VITE_DOCUMENT_API_URL
+  ?? (import.meta.env.VITE_DIRECT_SERVICES === '1'
+    ? 'http://localhost:9005/api/v1'
+    : `${gateway}/documents/api/v1`)
+
 export const DOC_STATUS_STYLES = {
   ACTIVE: 'bg-emerald-50 text-emerald-700',
   ARCHIVED: 'bg-slate-100 text-slate-500',
@@ -69,7 +75,7 @@ export function Field({ label, children }) {
 
 /** Fetches a binary with the bearer token — browser open/download flows. */
 export async function docFileUrl(path) {
-  const res = await fetch(`http://localhost:8085/api/v1${path}`, {
+  const res = await fetch(`${documentApi}${path}`, {
     credentials: 'include',
     headers: { Authorization: `Bearer ${tokenStore.get()}` },
   })
